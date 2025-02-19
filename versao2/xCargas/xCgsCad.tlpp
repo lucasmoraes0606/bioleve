@@ -1,0 +1,259 @@
+#INCLUDE "Protheus.ch"
+#INCLUDE "fwbrowse.ch"
+
+#DEFINE ENTER CHR(13)+CHR(10)
+
+
+
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ xCargas      ³ Autor ³ Lucas Pereira      ³ Data ³ 19/05/15 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Ajustar as perguntas no SX1.					              ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ AjustaSX1		                                          ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ RGPR01, Localizacoes...                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/               
+
+User Function xCgsCad() 
+    Private cCadastro := "Cargas"
+    Private aCores	  := {}
+    Private aRotina   := {}
+    private aRotina1  := {}
+    private aRotina2  := {}  
+    private aRotina3  := {} 
+    Private cDelFunc  := ".T." // Validacao para a exclusao. Pode-se utilizar ExecBlock
+    Private cString   := "ZA4"
+    Private cFiltro   := ""      
+    private  _nLin	  := 0050 
+
+    //bitmaps
+    PRIVATE oOk 	:= LoadBitmap( GetResources(), "LBOK")
+    PRIVATE oNo 	:= LoadBitmap( GetResources(), "LBNO")
+    Private oMarkOk	:= LoadBitmap(GetResources(), "CHECKED") 
+    Private oMarkNo	:= LoadBitmap(GetResources(), "UNCHECKED")   
+    Private oAmar	:= LoadBitmap(GetResources(), "BR_AMARELO") 
+    Private oAzul 	:= LoadBitmap(GetResources(), "BR_AZUL")  
+    Private oVerd 	:= LoadBitmap(GetResources(), "BR_VERDE")
+    Private oVerm 	:= LoadBitmap(GetResources(), "BR_VERMELHO")     
+
+    //FONTES
+
+    Private oFont1 		:= TFont():New("Lucida Sans",,018,,.T.,,,,,.F.,.F.)
+    Private oFont2		:= TFont():New( "Courier New",,10,,.T.,,,,,.F. ) // NEGRITO
+    Private oFont3		:= TFont():New( "Courier New",,09,,.F.,,,,,.F. )
+    Private oFont4		:= TFont():New( "Courier New",,21,,.T.,,,,,.F. ) // NEGRITO
+    Private oFont5		:= TFont():New( "Courier New",,28,,.F.,,,,,.F. )
+    Private oFont6		:= TFont():New( "Courier New",,16,,.T.,,,,,.F. ) // NEGRITO
+    Private oFont7		:= TFont():New( "Courier New",,18,,.T.,,,,,.F. ) // NEGRITO
+
+    Private oFont8		:= TFont():New( "Times New Roman",,10,,.T.,,,,.T.,.F. ) // NEGRITO
+    Private oFont9		:= TFont():New( "Times New Roman",,14,,.T.,,,,.T.,.F. ) // NEGRITO
+    Private oFont10		:= TFont():New( "Times New Roman",,11,,.F.,,,,,.F. )
+    Private oFont11		:= TFont():New( "Times New Roman",,10,,.F.,,,,.T.,.F. ) 
+    Private oFont12		:= TFont():New( "Times New Roman",,11,,.T.,,,,.T.,.F. ) // NEGRITO
+    Private oFont13		:= TFont():New( "Times New Roman",,08,,.F.,,,,.T.,.F. ) // NEGRITO   
+    Private oFont14		:= TFont():New("MS Sans Serif",,018,,.F.,,,,,.F.,.F.)     
+
+
+    aAdd(aRotina,{"Pesquisar"	,"AxPesqui"		,0,1, 0, .T.})
+    aAdd(aRotina,{"Visualizar"	,"u_xCgsTela"	,0,2, 0, NIL})
+    aAdd(aRotina,{"Mont.D.Carga","u_xCgsTela"	,0,3, 0, NIL})
+    aAdd(aRotina,{"Processos"	,aRotina1   	,0,7, 0, NIL}) 
+    aAdd(aRotina,{"Relatorios"	,aRotina2   	,0,7, 0, NIL}) 
+    aAdd(aRotina,{"Liberações"	,aRotina3   	,0,7, 0, NIL})
+
+    aAdd(aRotina,{"Aglutina.Carga"	,"u_xCgUnifica"	,0,7, 0, NIL})
+    aAdd(aRotina,{"Desmonte"	,"u_Desmont"	,0,7, 0, NIL})
+    aAdd(aRotina,{"Cancelar"	,"u_xCargaExcl"	,0,5, 0, NIL})
+    aAdd(aRotina,{"Exc.Pedido"	,"u_xPedExcl"	,0,7, 0, NIL})
+    aAdd(aRotina,{"Legenda"		,"U_xCargaLeg"	,0,7, 0, .f.})
+    aAdd(aRotina,{"Boletos"		,"U_xBolBB"     ,0,7, 0, NIL}) 
+    aAdd(aRotina,{"Etiquetas"	,"U_EtqZebra"   ,0,7, 0, NIL})
+    aAdd(aRotina,{"Alt. Veiculo","U_AltVeic"   ,0,7, 0, NIL})
+
+    aAdd(aRotina,{"Rotas de Entrega","U_xCgsRota"   ,0,7, 0, NIL})
+    
+
+    aAdd(aRotina1,{"Env.Confe"	,"U_xCargaCon"	,0,7, 0, NIL})   
+    aAdd(aRotina1,{"Lib.Exped"	,"U_xCarga_Exp"  ,0,7, 0, NIL}) 
+    aAdd(aRotina1,{"Expedição"	,"U_xCargaEpe"   ,0,7, 0, NIL})   
+    aAdd(aRotina1,{"Prep.Docs"	,"U_Fat_auto"   ,0,7, 0, NIL})   
+    aAdd(aRotina1,{"Entregas"	,"U_xCargaEnt"   ,0,7, 0, NIL}) 
+    aAdd(aRotina1,{"Finaliza"	,"U_xCargaFin"   ,0,7, 0, NIL}) 
+    aAdd(aRotina1,{"Dados.Entr.","U_xDadEnt"   ,0,7, 0, NIL}) 
+
+    aAdd(aRotina2,{"Mp.Separa"	,"U_RCargaMSP"   ,0,7, 0, NIL}) 
+    aAdd(aRotina2,{"Romaneio"	,"U_XROMANEIO"   ,0,7, 0, NIL}) 
+    aAdd(aRotina2,{"Acom.Entre"	,"U_XENTREGAS"   ,0,7, 0, NIL}) 
+    aAdd(aRotina2,{"Rel. Roman"	,"U_XPRECONROM"   ,0,7, 0, NIL}) 
+    aAdd(aRotina2,{"Capa.Entre.","U_FSR101"		 ,0,7, 0, NIL})
+
+    //aAdd(aRotina3,{"Credito"	,"Ma450ClAut"   ,0,7, 0, NIL}) 
+    //aAdd(aRotina3,{"Estoque"	,"A455LibAut"   ,0,7, 0, NIL})   
+
+
+
+    aAdd(aCores, { "ZA4_STATUS == 'A' ", 'BR_VERDE'})
+    aAdd(aCores, { "ZA4_STATUS == 'C' ", "BR_AMARELO"})
+    aAdd(aCores, { "ZA4_STATUS == 'L' ", "BR_AZUL"})
+    aAdd(aCores, { "ZA4_STATUS == 'F' ", "BR_PRETO"})
+    aAdd(aCores, { "ZA4_STATUS == 'E' ", "BR_MARROM"}) 
+    aAdd(aCores, { "ZA4_STATUS == 'P' ", "BR_PINK"})
+    aAdd(aCores, { "ZA4_STATUS == 'T' ", "BR_VERMELHO"})  
+    aAdd(aCores, { "ZA4_STATUS == 'Z' ", "BR_BRANCO"})     
+
+    VldPergCarga(padr("xCargas",10))
+    SetKey(VK_F12,{|| xCargParm()})
+
+
+    dbSelectArea("ZA4")
+    dbSetOrder(1)
+    mBrowse(,,,,cString,,,,,,aCores,,,,,,,,cFiltro) 
+    SetKey(VK_F12,Nil)
+ 
+Return()    
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ AjustaSX1   ³ Autor ³ Lucas Pereira      ³ Data ³ 19/05/14 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Ajustar as perguntas no SX1.					              ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ AjustaSX1		                                          ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ RGPR01, Localizacoes...                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+static function xCargParm()
+    local rArea := Getarea()
+    Pergunte("xCargas",.T.)
+    restarea(rArea)
+return()
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ AjustaSX1   ³ Autor ³ Lucas Pereira      ³ Data ³ 19/05/14 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Ajustar as perguntas no SX1.					              ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ AjustaSX1		                                          ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ RGPR01, Localizacoes...                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+
+
+Static Function VldPergCarga(cPerg)
+    LOCAL aRegs 	:= {}
+    LOCAL aAreaOld 	:= GetArea()
+    Local nX        := 0 
+
+
+    AADD(aRegs,{"Agrup. de Rotas ?"	,"Agrup. de Rotas ?","Agrup. de Rotas ?","mv_ch01","C", 3,0,0,"G",""  ,"mv_par01",""		     ,""		   ,""            ,"" ,"",""				  ,""				,""			   ,"","",""  	   ,""	   ,""	  ,"","",""})
+    AADD(aRegs,{"Ordena Rotas?"		,"Ordena Rotas?"	,"Ordena Rotas?"	,"mv_ch02","N", 1,0,0,"C",""  ,"mv_par02","Codigo"		 ,""		   ,""            ,"" ,"","Alfabetica"				  ,""				,""			   ,"","",""  	   ,""	   ,""	  ,"","",""})
+            
+    dbSelectArea("SX1")
+    dbSetOrder(1)
+    For nX:=1 to Len(aRegs)
+        If !(dbSeek(cPerg+StrZero(nx,2)))
+            RecLock("SX1",.T.)
+            Replace X1_GRUPO    with cPerg
+            Replace X1_ORDEM   	with StrZero(nx,2)
+            Replace x1_pergunte	with aRegs[nx][01]
+            Replace x1_perspa   with aRegs[nx][02]
+            Replace x1_pereng   with aRegs[nx][03]
+            Replace x1_variavl	with aRegs[nx][04]
+            Replace x1_tipo		with aRegs[nx][05]
+            Replace x1_tamanho	with aRegs[nx][06]
+            Replace x1_decimal	with aRegs[nx][07]
+            Replace x1_presel   with aRegs[nx][08]
+            Replace x1_gsc      with aRegs[nx][09]
+            Replace x1_valid    with aRegs[nx][10]
+            Replace x1_var01    with aRegs[nx][11]
+            Replace x1_def01    with aRegs[nx][12]
+            Replace x1_defspa1	with aRegs[nx][13]
+            Replace x1_defeng1	with aRegs[nx][14]
+            Replace x1_cnt01    with aRegs[nx][15]
+            Replace x1_var02    with aRegs[nx][16]
+            Replace x1_def02    with aRegs[nx][17]
+            Replace x1_defspa2	with aRegs[nx][18]
+            Replace x1_defeng2	with aRegs[nx][19]
+            Replace x1_cnt02    with aRegs[nx][20]
+            Replace x1_var03    with aRegs[nx][21]
+            Replace x1_def03    with aRegs[nx][22]
+            Replace x1_defspa3	with aRegs[nx][23]
+            Replace x1_defeng3	with aRegs[nx][24]
+            Replace x1_f3     	with aRegs[nx][25]
+            Replace x1_grpsxg 	with aRegs[nx][26]
+            Replace x1_def04 	with aRegs[nx][27]
+                
+            MsUnlock()
+        Endif
+    Next
+
+    RestArea( aAreaOld )
+return()    
+
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ AjustaSX1   ³ Autor ³ Lucas Pereira      ³ Data ³ 19/05/14 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Ajustar as perguntas no SX1.					              ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ AjustaSX1		                                          ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ RGPR01, Localizacoes...                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+
+
+user Function xCgUnifica()
+    local rArea := Getarea()
+    PRIVATE cCgCodOrig := ZA4->ZA4_CODCARG
+    PRIVATE cCgNomOrig := ZA4->ZA4_NOME
+    PRIVATE cCgCodDest := space(6)
+    PRIVATE cCgNomDest := ""
+
+
+    DEFINE MSDIALOG oDlgRotPed TITLE "Aglutinação de Cargas" FROM 000, 000  TO 180, 500 COLORS 0, 16777215 PIXEL
+        
+        @ 002, 005 GROUP oGroup1 TO 030, 246 PROMPT "Carga Origem?" OF oDlgRotPed COLOR 0, 16777215 PIXEL
+        @ 012, 011 MSGET oCgCodOrig VAR cCgCodOrig SIZE 060, 010 OF oDlgRotPed COLORS 0, 16777215 PIXEL WHEN .F.
+        @ 012, 072 MSGET oCgNomOrig VAR cCgNomOrig SIZE 170, 010 OF oDlgRotPed COLORS 0, 16777215 PIXEL WHEN .F.
+        
+        @ 032, 005 GROUP oGroup1 TO 060, 246 PROMPT "Carga Destino?" OF oDlgRotPed COLOR 0, 16777215 PIXEL
+        @ 042, 011 MSGET oCgCodDest VAR cCgCodDest SIZE 060, 010 OF oDlgRotPed COLORS 0, 16777215 PIXEL F3 "ZA4" 
+        @ 042, 072 MSGET oCgNomDest VAR cCgNomDest SIZE 170, 010 OF oDlgRotPed COLORS 0, 16777215 PIXEL WHEN .F.
+         
+        @ 053, 207 BUTTON oButton1 PROMPT "Fecha" SIZE 037, 012 OF oDlgRotPed PIXEL action oDlgRotPed:end()
+        @ 053, 165 BUTTON oButton1 PROMPT "Aglutina" SIZE 037, 012 OF oDlgRotPed PIXEL action Aglutina()    
+
+    ACTIVATE MSDIALOG oDlgRotPed CENTERED
+
+    restarea(rArea)
+return
+
+static function Aglutina()
+
+
+return()

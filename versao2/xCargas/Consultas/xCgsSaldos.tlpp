@@ -1,0 +1,682 @@
+#INCLUDE "Protheus.ch"
+#INCLUDE "fwbrowse.ch"
+
+#DEFINE ENTER CHR(13)+CHR(10)
+
+/*/{Protheus.doc} xGgsCSaldo
+	(long_description)
+	@type  User Function
+	@author Lucas Pereira
+	@since 19/12/2024
+	@version version
+	@param param_name, param_type, param_descr
+	@return return_var, return_type, return_description
+	@example
+	(examples)
+	@see (links_or_references)
+	/*/
+user Function xGgsCSaldo
+
+	Private oConsulta := xGgsSaldo():New()
+	oConsulta:Init()
+	oConsulta:Show()
+
+Return 
+
+
+
+//---------------------------------------------------------------------------- */
+
+class xGgsSaldo
+	PUBLIC Data oDlg As Object
+	PUBLIC Data oLayer As Object
+    
+	PUBLIC Data oFontAno    
+    PUBLIC Data oFontSub    
+    PUBLIC Data oFontSubN   
+    PUBLIC Data oFontBtn  
+	PUBLIC Data oF30  
+	PUBLIC Data oF31
+
+	PUBLIC Data oOk
+	PUBLIC Data oNo
+
+	PUBLIC Data oPanelPArametros
+	PUBLIC Data oPanelFiliais
+	PUBLIC Data oPanelLocais
+	PUBLIC Data oBrwFiliais
+	PUBLIC Data oBrwLocais
+
+	PUBLIC Data oPanelSaldos
+	PUBLIC Data oBrwSaldos
+	PUBLIC Data oPanelLotes
+	PUBLIC Data oBrwLotes
+
+	PUBLIC Data aSaldos
+	PUBLIC Data aLotes
+
+	PUBLIC Data aTamanho 		
+    PUBLIC Data nJanLarg 		
+    PUBLIC Data nJanAltu 
+
+	PUBLIC Data aButton		
+
+	PUBLIC Data sProdut
+	PUBLIC Data cTpProduto
+	PUBLIC Data cUnMedida
+	PUBLIC Data cTpSaldo
+	PUBLIC Data aTpSaldo
+	PUBLIC Data aFiliais
+	PUBLIC Data aLocais
+
+
+	PUBLIC Method New() Constructor
+	PUBLIC Method Init()
+	PUBLIC Method Show()
+	PUBLIC Method setTitulo()
+	PUBLIC Method DadosFiliais()
+	PUBLIC Method DadosLocais()
+	PUBLIC Method refresh()
+	PUBLIC Method MrkLocais()
+	PUBLIC Method MrkFiliais()
+	PUBLIC Method BuscaDados()
+endclass
+
+
+//---------------------------------------------------------------------------- */
+Method New() Class xGgsSaldo
+	self:oDlg 	 		:= nil
+	self:oLayer  		:= nil  
+	
+	//Fontes
+	Self:oFontAno    	:= TFont():New("Tahoma",,-38)
+    Self:oFontSub    	:= TFont():New("Tahoma",,-20)
+    Self:oFontSubN   	:= TFont():New("Tahoma",,-20,,.T.)
+    Self:oFontBtn    	:= TFont():New("Tahoma",,-14)
+	Self:oF30			:= TFont():New("Tahoma", , 30, , .T., , , , .F., .F. )	//Fonte Negrito   
+	Self:oF31 			:= TFont():New("Goudy Old Style",,022,,.T.,,,,,.F.,.F.)
+
+
+	Self:oOk 			:= LoadBitmap( GetResources(), "LBOK")
+	Self:oNo 			:= LoadBitmap( GetResources(), "LBNO")
+
+
+    Self:aTamanho 		:= MsAdvSize()
+    Self:nJanLarg 		:= Self:aTamanho[5]
+    Self:nJanAltu 		:= Self:aTamanho[6]
+
+	Self:aButton		:= {}
+
+	Self:sProdut		:= Space(100)
+	Self:cTpProduto		:= ""
+	Self:cUnMedida		:= ""
+	Self:aTpSaldo		:= {"Todos","Apenas Com Saldo","Zerados","Negativos"}
+	Self:cTpSaldo		:= Self:aTpSaldo[2]
+	Self:aFiliais		:= {}
+	Self:aLocais		:= {}
+
+	Self:aSaldos		:= { array(11) }
+	Self:aLotes			:= { array(10) }
+
+	
+return
+
+
+Method Init() Class xGgsSaldo
+    Local lCloseButt 	:= .f.//!(oAPP:lMdi)
+
+    If FlatMode()
+		nTop := 40
+		nLeft := 30 
+		nBottom := oMainWnd:nBottom + 10
+		nRight := oMainWnd:nRight + 20
+	Else
+		nTop := oMainWnd:nTop + 125
+		nLeft := oMainWnd:nLeft + 5
+		nBottom := oMainWnd:nBottom - 60
+		nRight := oMainWnd:nRight - 13
+	EndIf
+
+	//popula dados
+	Self:DadosFiliais() 
+	Self:DadosLocais() 
+
+	    
+	DEFINE MSDIALOG Self:oDlg TITLE "Saldos" FROM nTop, nLeft TO nBottom, nRight OF oMainWnd COLOR "W+/W" STYLE nOR(WS_VISIBLE, WS_POPUP) PIXEL
+		Self:oDlg:lMaximized := .T.
+
+		//Inicializa o FWLayer com a janela que ele pertencera e se sera exibido o botão de fechar
+		Self:oLayer := FWLayer():New()
+		Self:oLayer:init(Self:oDlg, lCloseButt)
+		
+		//Cria as colunas do Layer
+		Self:oLayer:addCollumn('Col01',25,.F.)
+		Self:oLayer:addCollumn('Col02',75,.F.)
+
+		//Adiciona Janelas as colunas
+		Self:oLayer:addWindow('Col01','C1_Win01','Parametros'   ,35,.T.,.F.,{|| /*Alert("Clique janela 01!")*/ },,{|| /*Alert("Janela 01 recebeu foco!")*/ })
+		Self:oLayer:addWindow('Col01','C1_Win02','Filiais'		,30,.T.,.T.,{|| /*Alert("Clique janela 01!")*/ },,{|| /*Alert("Janela 01 recebeu foco!")*/  })
+		Self:oLayer:addWindow('Col01','C1_Win03','Locais'		,30,.T.,.T.,{|| /*Alert("Clique janela 01!")*/ },,{|| /*Alert("Janela 01 recebeu foco!")*/  })
+		
+		Self:oLayer:addWindow('Col02','C2_Win01','Saldos'       ,55,.T.,.F.,{|| /*Alert("Clique janela 01!")*/  },,{||  /*Alert("Janela 01 recebeu foco!")*/ })
+		Self:oLayer:addWindow('Col02','C2_Win02','Lotes'        ,40,.T.,.F.,{|| /*Alert("Clique janela 01!")*/  },,{||  /*Alert("Janela 01 recebeu foco!")*/ })
+		
+		//*********************************************   Parametros  ***************************************************
+		Self:oPanelPArametros := TScrollBox():New(Self:oLayer:GetWinPanel('Col01', 'C1_Win01'),00,00, Self:nJanLarg  *0.34 ,  Self:nJanAltu *0.24  ,.T.,.T.,.F.)
+		Self:oPanelPArametros:Align := CONTROL_ALIGN_ALLCLIENT
+
+		oSay1:= TSay():New(05,01,{||'Pesquisa:'		},self:oPanelPArametros,,Self:oF31,,,,.T.,8421504,/*CLR_WHITE*/,200,20)
+		oSay1:= TSay():New(30,01,{||'Tp.Produto:'	},self:oPanelPArametros,,Self:oF31,,,,.T.,8421504,/*CLR_WHITE*/,200,20)
+		oSay1:= TSay():New(55,01,{||'Un.Medida:'	},self:oPanelPArametros,,Self:oF31,,,,.T.,8421504,/*CLR_WHITE*/,200,20)
+		oSay1:= TSay():New(80,01,{||'Saldo:'		},self:oPanelPArametros,,Self:oF31,,,,.T.,8421504,/*CLR_WHITE*/,200,20)
+		
+		oGetPes		:= TGet():New(00, 50, {|u| IF(PCount()>0,Self:sProdut:=u,Self:sProdut)}, self:oPanelPArametros, 150, 18, '@!',{|| Self:BuscaDados() },,,Self:oF30,,,.T.,,,,,,,,,,'Self:sProdut')
+		oGetPes:SetFocus() 
+
+		oGetTpPr	:= TGet():New(25, 50, {|u| IF(PCount()>0,Self:cTpProduto:=u,Self:cTpProduto)}, self:oPanelPArametros, 150, 18, '@!',{|| Self:BuscaDados() },,,Self:oF30,,,.T.,,,{||.f.},,,,,,,'Self:cTpProduto')
+		oTButton1 	:= TButton():New( 25, 200, "?",self:oPanelPArametros,{||alert("Botão 03")}, 10,18,,,.F.,.T.,.F.,,.F.,,,.F. )
+		
+		oGetUnMe	:= TGet():New(50, 50, {|u| IF(PCount()>0,Self:cUnMedida:=u,Self:cUnMedida)}, self:oPanelPArametros, 150, 18, '@!',{|| Self:BuscaDados()   },,,Self:oF30,,,.T.,,,{||.f.},,,,,,,'Self:cUnMedida')
+		oTButton2 	:= TButton():New( 50, 200, "?",self:oPanelPArametros,{||alert("Botão 03")}, 10,18,,,.F.,.T.,.F.,,.F.,,,.F. )
+		
+		oGetTpSl 	:= TComboBox():New(75,50,{|u|if(PCount()>0,Self:cTpSaldo:=u,Self:cTpSaldo)}, Self:aTpSaldo,150,18,self:oPanelPArametros,,{|| Self:BuscaDados()   },,,,.T.,,,,,,,,,'Self:cTpSaldo')
+		
+	//*********************************************   FILIAIS  ***************************************************
+		Self:oPanelFiliais:= TPanel():New(0, 0, "", Self:oLayer:GetWinPanel('Col01','C1_Win02' ), Nil, .T., .T., Nil, Nil, 20, 20)
+		Self:oPanelFiliais:Align := CONTROL_ALIGN_ALLCLIENT
+
+		Self:oBrwFiliais := TCBrowse():New( 000 , 000, Self:nJanLarg  *0.29  , Self:nJanAltu *0.24,, {"","Grupo","Filial","Descricao"},{10,20,40}, Self:oPanelFiliais,,,,,{||  Self:MrkFiliais(Self:oBrwFiliais:nAt), Self:BuscaDados()  },,,,,,,.F.,,.T.,,.F.,,, )
+		Self:oBrwFiliais:lHScroll := .T. // NoScroll
+		Self:oBrwFiliais:SetArray(self:aFiliais)
+		Self:oBrwFiliais:bLine := {|| { IIF(self:aFiliais[Self:oBrwFiliais:nAt,1],Self:oOk,Self:oNo) ,;
+									self:aFiliais[Self:oBrwFiliais:nAt,2] , ;
+									self:aFiliais[Self:oBrwFiliais:nAt,3] , ;
+									self:aFiliais[Self:oBrwFiliais:nAt,4] }}
+
+	//*********************************************   LOCAIS  ***************************************************
+		Self:oPanelLocais:= TPanel():New(0, 0, "", Self:oLayer:GetWinPanel('Col01','C1_Win03' ), Nil, .T., .T., Nil, Nil, 20, 20)
+		Self:oPanelLocais:Align := CONTROL_ALIGN_ALLCLIENT
+
+		Self:oBrwLocais := TCBrowse():New( 000 , 000, Self:nJanLarg  *0.29  , Self:nJanAltu *0.24,, {"","Local","Descricao"},{10,20,40}, Self:oPanelLocais,,,,,{||  Self:MrkLocais(Self:oBrwLocais:nAt), Self:BuscaDados() },,,,,,,.F.,,.T.,,.F.,,, )
+		Self:oBrwLocais:lHScroll := .T. // NoScroll
+		Self:oBrwLocais:SetArray(self:aLocais)
+		Self:oBrwLocais:bLine := {|| { IIF(self:aLocais[Self:oBrwLocais:nAt,1],Self:oOk,Self:oNo) ,;
+									self:aLocais[Self:oBrwLocais:nAt,2] , ;
+									self:aLocais[Self:oBrwLocais:nAt,3] }}
+
+
+
+	//*********************************************   Saldos  ***************************************************
+		Self:oPanelSaldos:= TPanel():New(0, 0, "", Self:oLayer:GetWinPanel('Col02','C2_Win01' ), Nil, .T., .T., Nil, Nil, 20, 20)
+		Self:oPanelSaldos:Align := CONTROL_ALIGN_ALLCLIENT
+
+
+		Self:oBrwSaldos := TCBrowse():New( 000 , 000, Self:nJanLarg  *0.74  , Self:nJanAltu *0.54,, ;
+						   {"Filial","Local","Codigo","Descricao","Emb.","Qtde","Reserva","Empenho","Pedido","Disponivel","Futuro"},;
+						   {10		,20		,20		 ,40		 , 20	, 30	,20	 	 , 30		,30		, 30		 ,30	}, ;
+						   Self:oPanelSaldos,,,,,{||  /*MrkLocais(Self:oBrwLocais:nAt)*/ },,,,,,,.F.,,.T.,,.F.,,, )
+		Self:oBrwSaldos:lHScroll := .T. // NoScroll
+		Self:oBrwSaldos:SetArray(self:aSaldos)
+		Self:oBrwSaldos:bLine := {|| {  self:aSaldos[Self:oBrwSaldos:nAt,1] ,;
+										self:aSaldos[Self:oBrwSaldos:nAt,2] , ;
+										self:aSaldos[Self:oBrwSaldos:nAt,3] , ;
+										self:aSaldos[Self:oBrwSaldos:nAt,4] , ;
+										self:aSaldos[Self:oBrwSaldos:nAt,5] , ;
+										self:aSaldos[Self:oBrwSaldos:nAt,6] , ;
+										self:aSaldos[Self:oBrwSaldos:nAt,7] , ;
+										self:aSaldos[Self:oBrwSaldos:nAt,8] , ;
+										self:aSaldos[Self:oBrwSaldos:nAt,9] , ;
+										self:aSaldos[Self:oBrwSaldos:nAt,10] , ;
+										self:aSaldos[Self:oBrwSaldos:nAt,11] }}
+
+
+
+	//*********************************************   Lotes  ***************************************************
+		Self:oPanelLotes:= TPanel():New(0, 0, "", Self:oLayer:GetWinPanel('Col02','C2_Win02' ), Nil, .T., .T., Nil, Nil, 20, 20)
+		Self:oPanelLotes:Align := CONTROL_ALIGN_ALLCLIENT
+
+
+		Self:oBrwLotes := TCBrowse():New( 000 , 000, Self:nJanLarg  *0.74  , Self:nJanAltu *0.54,, ;
+						   {"Filial","Local","Codigo","Descricao","Um","Lote","Validade","Qtde.","Empenho","Disponivel"},;
+						   {10		,20		,20		 ,40		 , 20	, 30	,20	 	 , 30		,30		, 30		}, ;
+						   Self:oPanelLotes,,,,,{||  /*MrkLocais(Self:oBrwLocais:nAt)*/ },,,,,,,.F.,,.T.,,.F.,,, )
+		Self:oBrwLotes:lHScroll := .T. // NoScroll
+		Self:oBrwLotes:SetArray(self:aLotes)
+		Self:oBrwLotes:bLine := {|| {  self:aLotes[Self:oBrwLotes:nAt,1] ,;
+										self:aLotes[Self:oBrwLotes:nAt,2] , ;
+										self:aLotes[Self:oBrwLotes:nAt,3] , ;
+										self:aLotes[Self:oBrwLotes:nAt,4] , ;
+										self:aLotes[Self:oBrwLotes:nAt,5] , ;
+										self:aLotes[Self:oBrwLotes:nAt,6] , ;
+										self:aLotes[Self:oBrwLotes:nAt,7] , ;
+										self:aLotes[Self:oBrwLotes:nAt,8] , ;
+										self:aLotes[Self:oBrwLotes:nAt,9] , ;
+										self:aLotes[Self:oBrwLotes:nAt,10] }}
+
+
+return()
+
+
+
+//---------------------------------------------------------------------------- */
+Method BuscaDados() Class xGgsSaldo
+	local x
+
+	cSQL := "SELECT B2_FILIAL,"
+	cSQL += "       B2_LOCAL,"
+	cSQL += "       B2_COD,"
+	cSQL += "       B1_DESC,"
+	cSQL += "       B2_QATU,"
+	cSQL += "       B1_UM," 
+	cSQL += "       B2_QEMP,"
+	cSQL += "       B2_RESERVA,"
+	cSQL += "       B2_QPEDVEN +  CASE WHEN SUM(C6_QTDVEN) IS NULL THEN 0 ELSE SUM(C6_QTDVEN) END  AS B2_QPEDVEN,"
+	cSQL += "       (B2_QATU - B2_QEMP - B2_RESERVA - B2_QPEDVEN - CASE WHEN SUM(C6_QTDVEN) IS NULL THEN 0 ELSE SUM(C6_QTDVEN) END) as B2_DISPONIVEL, "/*-( CASE WHEN SUM(C6_QTDVEN) IS NULL THEN 0 ELSE SUM(C6_QTDVEN) END )  "*/
+	cSQL += "       SUM(C7_QUANT) AS C7_QUANT"
+	cSQL += "  FROM " + RetSQLName("SB2")
+	cSQL += "  LEFT JOIN " + RetSQLName("SC7")
+	cSQL += "    ON C7_FILIAL = B2_FILIAL"
+	cSQL += "   AND C7_LOCAL = B2_LOCAL"
+	cSQL += "   AND C7_PRODUTO = B2_COD"
+	cSQL += "   AND C7_ENCER <> 'E'"
+	cSQL += "   AND C7_RESIDUO <> 'S'"
+	cSQL += "   AND " + RetSQLName("SC7") + ".D_E_L_E_T_ <> '*'"  
+
+	// ADCIONADO PARA TRATAR PEDIDOS SEM MOVIMENTO DE ESTOQUE
+	cSQL += "   LEFT JOIN "+RetSQLName("SC6") 
+	cSQL += "   ON C6_PRODUTO = B2_COD   "
+	cSQL += "   AND C6_TES in ('59A')       "
+	cSQL += "   AND "+RetSQLName("SC6") +" .D_E_L_E_T_ <> '*'  "
+	cSQL += "   AND C6_NOTA = ' '   " 
+	cSQL += "   AND C6_LOCAL = B2_LOCAL "
+	cSQL += "   AND C6_FILIAL = B2_FILIAL "
+	cSQL += "   AND NOT EXISTS (SELECT * FROM "+RetSQLName("SC5") +" WHERE C5_FILIAL = C6_FILIAL AND C5_NUM = C6_NUM AND C5_NOTA = 'XXXXXXXXX') "
+	cSQL += " INNER JOIN " + RetSQLName("SB1") +" SB1 "
+	cSQL += "    ON B1_COD = B2_COD AND SB1.D_E_L_E_T_ <> '*' "
+	cSQL += " WHERE " + RetSQLName("SB2") + ".D_E_L_E_T_ <> '*'"
+
+	IF SB1->(DBSETORDER(1),DBSEEK(XFILIAL("SB1")+ALLTRIM(Self:sProdut))) .and. !empty(Self:sProdut)
+		cSQL += " AND B2_COD = '" + Alltrim(Self:sProdut) + "' "
+	ELSEIF !empty(Self:sProdut)
+		cSQL += " AND B1_DESC LIKE '" + "%" + Alltrim(Self:sProdut) + "%" + "' "
+	ENDIF 
+
+	cSQL += " AND  B2_LOCAL IN ('"
+	lVirgula := .f.
+	FOR X:=1 TO LEN(Self:aLocais)
+		IF Self:aLocais[X,1]
+		cSQL += iif(lVirgula,"','"+Self:aLocais[X,2],Self:aLocais[X,2]) 
+		lVirgula := .T.
+		ENDIF
+	NEXT X  
+	cSQL += "') " 
+
+	if !empty(Self:cUnMedida)
+		cSQL += " AND B1_UM IN ('"+Self:cUnMedida+"')
+	endif
+
+	if !empty(Self:cTpProduto)
+		cSQL += " AND B1_TIPO IN ('"+Self:cTpProduto+"')
+	endif
+
+	if Self:cTpSaldo == self:aTpSaldo[2]
+		cSQL += " AND B2_QATU > 0 "
+	endif      
+		
+	cSQL += " AND  B2_LOCAL >=  '00'"    
+	cSQL += " AND  B1_MSBLQL <> '1'"   
+	
+	cSQL += " AND  B2_FILIAL IN ('"
+	lVirgula := .f.
+	FOR X:=1 TO LEN(Self:aFiliais)
+		IF Self:aFiliais[X,1]
+		cSQL += iif(lVirgula,"','"+Self:aFiliais[X,3],Self:aFiliais[X,3]) 
+		lVirgula := .T.
+		ENDIF
+	NEXT X  
+	cSQL += "') " 
+
+	cSQL += " GROUP BY B2_FILIAL, B2_LOCAL, B2_COD, B1_DESC, B2_QATU, B1_UM, B2_RESERVA, B2_QPEDVEN,B2_QEMP"
+	cSQL += " ORDER BY B1_DESC, B2_FILIAL, B2_LOCAL"
+
+	cSQL := ChangeQuery(cSQL)
+	dbUseArea(.T.,"TOPCONN",TCGenQry(,,cSQL),"SQL",.F.,.T.)	
+
+	SQL->(dbGoTop())
+	Self:aSaldos := {}
+	While SQL->(!EOF())
+		AADD ( Self:aSaldos  , {B2_FILIAL, B2_LOCAL, B2_COD, B1_DESC, B2_QATU, B1_UM , B2_RESERVA, B2_QEMP, B2_QPEDVEN, B2_DISPONIVEL, C7_QUANT})
+		SQL->(dbSkip())
+	Enddo
+	SQL->(dbCloseArea())
+
+	if empty(Self:aSaldos)
+		Self:aSaldos	:= { array(11) }
+	endif
+	Self:refresh()
+return()
+
+//---------------------------------------------------------------------------- */
+Method MrkFiliais(nPos) Class xGgsSaldo
+	self:aFiliais[nPos,1] := !self:aFiliais[nPos,1]
+	Self:Refresh()
+return()
+
+//---------------------------------------------------------------------------- */
+Method MrkLocais(nPos) Class xGgsSaldo
+	self:aLocais[nPos,1] := !self:aLocais[nPos,1]
+	Self:Refresh()
+return()
+//---------------------------------------------------------------------------- */
+Method Refresh() Class xGgsSaldo
+
+	Self:oBrwSaldos:SetArray(self:aSaldos)
+	Self:oBrwSaldos:bLine := {|| {  self:aSaldos[Self:oBrwSaldos:nAt,1] ,;
+									self:aSaldos[Self:oBrwSaldos:nAt,2] , ;
+									self:aSaldos[Self:oBrwSaldos:nAt,3] , ;
+									self:aSaldos[Self:oBrwSaldos:nAt,4] , ;
+									self:aSaldos[Self:oBrwSaldos:nAt,5] , ;
+									self:aSaldos[Self:oBrwSaldos:nAt,6] , ;
+									self:aSaldos[Self:oBrwSaldos:nAt,7] , ;
+									self:aSaldos[Self:oBrwSaldos:nAt,8] , ;
+									self:aSaldos[Self:oBrwSaldos:nAt,9] , ;
+									self:aSaldos[Self:oBrwSaldos:nAt,10] , ;
+									self:aSaldos[Self:oBrwSaldos:nAt,11] }}
+	Self:oBrwSaldos:refresh()
+
+
+	Self:oBrwLotes:SetArray(self:aLotes)
+	Self:oBrwLotes:bLine := {|| {  self:aLotes[Self:oBrwLotes:nAt,1] ,;
+									self:aLotes[Self:oBrwLotes:nAt,2] , ;
+									self:aLotes[Self:oBrwLotes:nAt,3] , ;
+									self:aLotes[Self:oBrwLotes:nAt,4] , ;
+									self:aLotes[Self:oBrwLotes:nAt,5] , ;
+									self:aLotes[Self:oBrwLotes:nAt,6] , ;
+									self:aLotes[Self:oBrwLotes:nAt,7] , ;
+									self:aLotes[Self:oBrwLotes:nAt,8] , ;
+									self:aLotes[Self:oBrwLotes:nAt,9] , ;
+									self:aLotes[Self:oBrwLotes:nAt,10] }}
+	Self:oBrwLotes:refresh()
+
+	Self:oBrwFiliais:SetArray(self:aFiliais)
+	Self:oBrwFiliais:bLine := {|| { IIF(self:aFiliais[Self:oBrwFiliais:nAt,1],Self:oOk,Self:oNo) ,;
+								self:aFiliais[Self:oBrwFiliais:nAt,2] , ;
+								self:aFiliais[Self:oBrwFiliais:nAt,3] , ;
+								self:aFiliais[Self:oBrwFiliais:nAt,4] }}
+	Self:oBrwFiliais:refresh()
+
+	Self:oBrwLocais:SetArray(self:aLocais)
+	Self:oBrwLocais:bLine := {|| { IIF(self:aLocais[Self:oBrwLocais:nAt,1],Self:oOk,Self:oNo) ,;
+								self:aLocais[Self:oBrwLocais:nAt,2] , ;
+								self:aLocais[Self:oBrwLocais:nAt,3] }}
+	Self:oBrwLocais:refresh()					
+								
+Return 
+
+
+
+//---------------------------------------------------------------------------- */
+Method Show() Class xGgsSaldo
+	//ACTIVATE MSDIALOG oConsulta:oDlg ON INIT  
+	oConsulta:oDlg:Activate(,,,.T.,  /* {|| msgstop('validou!') ,.T.}*/   ,,  {|| EnchoiceBar(oConsulta:oDlg,{|| oDlg:End()},{|| oConsulta:oDlg:End()},,oConsulta:aButton) , oConsulta:setTitulo()}  )
+Return 
+
+
+//---------------------------------------------------------------------------- */
+Method setTitulo() Class xGgsSaldo
+		@ 004, 003 SAY "Est"        SIZE 200, 030 FONT Self:oFontAno  OF Self:oDlg COLORS RGB(149,179,215) PIXEL
+		@ 004, 050 SAY "Consulta"   SIZE 200, 030 FONT Self:oFontSub  OF Self:oDlg COLORS RGB(031,073,125) PIXEL
+		@ 014, 050 SAY "Saldos"  	SIZE 200, 030 FONT Self:oFontSubN OF Self:oDlg COLORS RGB(031,073,125) PIXEL
+return
+
+
+//---------------------------------------------------------------------------- */
+Method DadosFiliais() Class xGgsSaldo
+	local aArea 	:= getarea()
+
+
+	dbselectarea("SM0")
+	SM0->(DBGOTOP())
+	WHILE SM0->(!EOF())
+		AADD(Self:aFiliais,{.f.,M0_CODIGO,M0_CODFIL,M0_FILIAL})
+		SM0->(DBSKIP())
+	ENDDO 
+	
+	restarea(aArea)
+
+return()
+
+
+//---------------------------------------------------------------------------- */
+Method DadosLocais() Class xGgsSaldo
+	local cSQL
+	
+	cSQL := " select DISTINCT NNR_CODIGO,
+	cSQL += " 	     NNR_DESCRI
+	cSQL += " from "+RETSQLNAME("NNR")	//Alteração para tabela padrão de estoque efetuada dia 29/05/2019 as 14:30 (Analista Júnior Dangelo) 
+	cSQL += " WHERE D_E_L_E_T_ <> '*'
+	cSQL += " ORDER BY NNR_CODIGO
+
+	cSQL := ChangeQuery(cSQL)
+	dbUseArea(.T.,"TOPCONN",TCGenQry(,,cSQL),"SQL",.F.,.T.)	
+	dbGoTop()
+
+	Self:aLocais := {}
+
+	While !EOF()
+		AADD ( Self:aLocais  , {.F., NNR_CODIGO, NNR_DESCRI})//, Z8_VEND, Z8_NOMVEND})
+		dbSkip()
+	End
+
+	SQL->(dbCloseArea())	
+return
+
+
+static function consulta(cTipo)
+	local rArea				:= getarea() 
+
+	private lExec           := .F.
+	private cCodigo			:= Space(10) 
+	private cDesc	  		:= Space(50)
+	private aListCon	 	:= {}
+	private aListSelCon		:= {}
+	PRIVATE oOk 			:= LoadBitmap( GetResources(), "LBOK")
+	PRIVATE oNo    			:= LoadBitmap( GetResources(), "LBNO") 
+	Private cRet    		:= ""
+	
+	DadosCon(cTipo)
+	MontaCon(cTipo)
+
+	restarea(rArea)
+return cRet
+
+
+
+
+static function DadosCon(cTipo)   
+	DO CASE
+			
+		CASE cTipo  ==  "TPPRODUTO" 
+			cQuery := "SELECT X5_CHAVE AS COD, X5_DESCRI AS DESCRI FROM "+RETSQLNAME("SX5")+" SX5  "
+			cQuery += " WHERE SX5.D_E_L_E_T_ <> '*'  "
+			cQuery += " AND X5_TABELA = '02'  " 
+			cQuery += " AND X5_FILIAL = '"+XFILIAL("SX5")+"'  "    
+			
+			IF !EMPTY(cCodigo)		
+				cQuery += " AND X5_CHAVE LIKE '%"+ALLTRIM(cCodigo)+"%'"
+			ENDIF         
+			
+			IF !EMPTY(cDesc)
+				cQuery += " AND X5_DESCRI LIKE '%"+ALLTRIM(cDesc)+"%'"      
+			ENDIF
+			cQuery += " ORDER BY X5_CHAVE, X5_DESCRI"
+			
+			
+		CASE cTipo  ==  "UNMEDIDA" 
+			cQuery := "SELECT AH_UNIMED AS COD, AH_UMRES AS DESCRI FROM "+RETSQLNAME("SAH")+" SAH  "
+			cQuery += " WHERE SAH.D_E_L_E_T_ <> '*'  "
+			cQuery += " AND AH_FILIAL = '"+XFILIAL("SAH")+"'  "        
+			
+			IF !EMPTY(cCodigo)		
+				cQuery += " AND AH_UNIMED LIKE '%"+ALLTRIM(cCodigo)+"%'"
+			ENDIF         
+			
+			IF !EMPTY(cDesc)
+				cQuery += " AND AH_UMRES LIKE '%"+ALLTRIM(cDesc)+"%'"      
+			ENDIF	
+			cQuery += " ORDER BY AH_UNIMED, AH_UMRES"
+
+					
+	ENDCASE
+	cQuery := ChangeQuery(cQuery)
+	dbUseArea(.T.,"TOPCONN",TcGenQry(,,cQuery),"TMP",.T.,.T.) 
+	aListCon := {}
+	WHILE TMP->(!EOF())
+		if !empty(TMP->COD) .Or. !empty(TMP->DESCRI)
+			AADD(aListCon,{TMP->COD, TMP->DESCRI} )  
+		endif  
+		TMP->(DBSKIP())
+	ENDDO
+	TMP->(DBCLOSEAREA()) 
+	
+	if type("oList1")<> "U"
+		refreshList(oList1, aListCon)
+	endif
+return
+
+static function MontaCon(cTipo)
+
+  DEFINE MSDIALOG oDlgfilter TITLE "Filtro" FROM 000, 000  TO 300, 800 COLORS 0, 16777215 PIXEL
+	     
+	    @ 002, 002 GROUP oGroup2 TO 026, 246 PROMPT "Busca" OF oDlgfilter COLOR 0, 16777215 PIXEL  
+	    @ 026, 002 GROUP oGroup1 TO 131, 246 PROMPT "Detalhes" OF oDlgfilter COLOR 0, 16777215 PIXEL
+	    @ 002, 248 GROUP oGroup1 TO 131, 400 PROMPT "Selecionados" OF oDlgfilter COLOR 0, 16777215 PIXEL
+	    
+	    @ 013, 005 SAY oSay1 PROMPT "Codigo:" SIZE 025, 007 OF oDlgfilter COLORS 0, 16777215 PIXEL  
+	    oGetPesCod	:= TGet():New(010,031,{|u|IF(PCount()>0,cCodigo:=u,cCodigo)},oDlgfilter,60,10, '@!',{||DadosCon(cTipo)},,, /*oF14*/,,,.T.,,,,,,,,,,'cCodigo')
+	    
+	    @ 013, 097 SAY oSay2 PROMPT "Descricao" SIZE 025, 007 OF oDlgfilter COLORS 0, 16777215 PIXEL
+	    oGetPesCod	:= TGet():New(010,126,{|u|IF(PCount()>0,cDesc:=u,cDesc)},oDlgfilter,116,10, '@!',{||DadosCon(cTipo)},,, /*oF14*/,,,.T.,,,,,,,,,,'cDesc')    
+	    
+	    @ 035, 005 LISTBOX oList1 Fields HEADER "Codigo","Descricao" SIZE 237, 091 OF oDlgfilter PIXEL ColSizes 10,20,50   ;
+	    ON dblClick(eval({|| addSelected(aListCon, oList1:nAt, aListSelCon), refreshList(oList2, aListSelCon)}))  
+	    
+	    refreshList(oList1, aListCon)
+		
+		@ 013, 253 SAY oSay1 PROMPT "Clique duas vezes sobre um item para removê-lo" SIZE 150, 007 OF oDlgfilter COLORS 0, 16777215 PIXEL
+		
+		@ 035, 253 LISTBOX oList2 Fields HEADER "Codigo","Descricao" SIZE 142, 091 OF oDlgfilter PIXEL ColSizes 10,20,50   ;
+	    ON dblClick(eval({|| removeSelected(aListSelCon, oList2:nAt), refreshList(oList2, aListSelCon)}))
+	
+	    refreshList(oList2, aListSelCon)
+	    
+	    @ 134, 210 BUTTON oButton3 PROMPT "Todos >" SIZE 037, 012 OF oDlgfilter PIXEL  action {|| addAll(aListCon, aListSelCon), refreshList(oList2, aListSelCon) }
+	    @ 134, 249 BUTTON oButton3 PROMPT "< Limpa" SIZE 037, 012 OF oDlgfilter PIXEL  action {|| removeAll(oList2, aListSelCon), refreshList(oList2, aListSelCon) }
+	    
+	    @ 134, 361 BUTTON oButton1 PROMPT "Ok" SIZE 037, 012 OF oDlgfilter PIXEL  action {|| Grava(cTipo), oDlgfilter:end() }
+	    @ 134, 320 BUTTON oButton2 PROMPT "Cancela" SIZE 037, 012 OF oDlgfilter PIXEL action oDlgfilter:end()    
+	    
+	  ACTIVATE MSDIALOG oDlgfilter CENTERED
+return(.F.)
+
+static function addSelected(aList1, nPos, aList2)
+	local nX
+	if empty(aList1)
+		return
+	endif
+	for nX := 1 to len(aList2)
+		if aList2[nX, 1] == aList1[nPos, 1]
+			return
+		endif
+	next nX
+	aAdd(aList2, aList1[nPos])
+return
+
+//Remove uma Opção
+static function removeSelected(aList, nPos)
+	if empty(aList) .Or. nPos > len(aList)
+		return
+	endif
+	aDel(aList, nPos)
+	iif(len(aList) > 1, aSize(aList, (len(aList)-1)), aList := {})
+return
+
+//Grava as opções selecionadas
+static function Grava(cTipo) 
+
+	DO CASE
+		CASE cTipo  ==  "TPPRODUTO" 
+			oConsulta:cTpProduto := cRet
+		CASE cTipo  ==  "UNMEDIDA" 
+			oConsulta:cUnMedida  := cRet
+	ENDCASE    
+
+return(.F.) 
+
+//Atualização dos dados do cliente
+static function addIn(cBase, cNovo)
+	local cAtual := alltrim(cBase)
+	local aItens := StrTokArr(cNovo, ';')
+	local nX
+	if substr(cAtual, -1) != ';' .And. !empty(cAtual)
+		cAtual += ';'
+	endif
+	for nX := 1 to len(aItens)
+		if !(aItens[nX] $ cAtual)
+			cAtual += aItens[nX]+';'
+		endif 
+	next nX
+return cAtual
+
+static function removeFrom(cBase, cNovo)
+	local cAtual := alltrim(cBase)
+	local aItens := StrTokArr(cNovo, ';')
+	local nX
+	if substr(cAtual, -1) != ';' .And. !empty(cAtual)
+		cAtual += ';'
+	endif
+	for nX := 1 to len(aItens)
+		if aItens[nX]+';' $ cAtual
+			cAtual := StrTran(cAtual, aItens[nX]+';', '')
+		endif 
+	next nX
+return cAtual
+
+
+
+static function addAll(aList1, aList2)
+	local nX, nY, nOp
+	for nX := 1 to len(aList1)
+		for nY := 1 to len(aList2)
+			if aList1[nX, 1] == aList2[nY, 1]
+				nOp := 1
+				exit
+			endif
+		next nY
+		if nOp != 1
+			aAdd(aList2, aList1[nX])
+		endif
+		nOp := 0
+	next nX
+return()
+
+static function removeAll(oList, aList)
+	aList := {}
+	refreshList(oList, aList)
+return()
+
+static function refreshList(oList, aDados)
+	oList:SetArray(aDados)
+	if empty(aDados)
+		oList:bLine := {|| {;
+		"",;
+		"";
+		}}
+	else 
+	    oList:bLine := {|| {;
+	      aDados[oList:nAt,1],;
+	      aDados[oList:nAt,2];
+	    }}
+    endif   
+    oList:refresh()
+return

@@ -1,0 +1,682 @@
+#INCLUDE "rwmake.ch"
+#INCLUDE "protheus.ch" 
+#INCLUDE "TOPCONN.CH
+
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ AjustaSX1   ³ Autor ³ Lucas Pereira      ³ Data ³ 19/05/14 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Ajustar as perguntas no SX1.					              ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ AjustaSX1		                                          ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ RGPR01, Localizacoes...                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+
+user function xCgsRPrenota
+    local x
+    Private alistPreNota := {}
+
+    for x:=1 to len(oCgTela:aPedLiberados )
+        if ! empty(oCgTela:aPedLiberados[x,3])
+            aadd(alistPreNota,{.T.,oCgTela:aPedLiberados[x,3],"Liberado",oCgTela:aPedLiberados[x,5],oCgTela:aPedLiberados[x,6]})
+        endif
+    next x	
+
+    for x:=1 to len(oCgTela:aPedBloqueados )
+        if ! empty(oCgTela:aPedBloqueados[x,3])
+            aadd(alistPreNota,{.T.,oCgTela:aPedBloqueados[x,3],"Boqueado",oCgTela:aPedBloqueados[x,5],oCgTela:aPedBloqueados[x,6]})
+        endif
+    next x	
+
+    for x:=1 to len(oCgTela:aPedAbertos )
+        if ! empty(oCgTela:aPedAbertos[x,3])
+            aadd(alistPreNota,{.T.,oCgTela:aPedAbertos[x,3],"Aberto",oCgTela:aPedAbertos[x,5],oCgTela:aPedAbertos[x,6]})
+        endif
+    next x	
+
+
+    if empty(alistPreNota)
+        msginfo("Nenhuma rota selecionada. Verifique!")
+        return()
+    endif
+
+
+    DEFINE MSDIALOG oDlgPreNota TITLE "Seleção Pedidos - Imp.Pre Nota" FROM 000, 000  TO 400, 600 COLORS 0, 16777215 PIXEL
+
+        @ 004, 003 LISTBOX olistPreNota Fields HEADER "x","Pedido","Status","Cliente","Nome" SIZE 291, 174 OF oDlgPreNota PIXEL ;
+        ColSizes 20,50,50,50,50 ON dblClick(Chk_Prenota(olistPreNota:nAt))  
+        
+        olistPreNota:SetArray(alistPreNota)
+        olistPreNota:bLine := {|| {;
+        if(alistPreNota[olistPreNota:nAt,1],oOk,oNo),;
+        alistPreNota[olistPreNota:nAt,2],;
+        alistPreNota[olistPreNota:nAt,3],;
+        alistPreNota[olistPreNota:nAt,4],;
+        alistPreNota[olistPreNota:nAt,5];
+        }}
+        
+        olistPreNota:bHeaderClick := {||Chk_Prenota(,1)  } 
+        @ 182, 254 BUTTON oButton1 PROMPT "Ok" SIZE 037, 012 OF oDlgPreNota PIXEL action Imp_PreNota()
+        @ 182, 211 BUTTON oButton2 PROMPT "Cancela" SIZE 037, 012 OF oDlgPreNota PIXEL action oDlgPreNota:end()
+
+    ACTIVATE MSDIALOG oDlgPreNota CENTERED
+
+Return
+
+static function Imp_PreNota
+    local x
+    local aPeds := {}
+    for x:=1 to len(alistPreNota)
+        if alistPreNota[x,1]
+            AADD(aPeds,alistPreNota[x,2])
+        endif
+    next x
+    if ! empty(aPeds)
+        Processa( { |lEnd| U_xCgSRPrNtImp(aPeds) })
+    else
+        msginfo("Nenum pedido selecionado. Verifique!")
+    endif
+    return()
+
+    static function Chk_Prenota(nPos,nOpc)
+    local x
+        if nOpc == 1
+            for x:=1 to len(alistPreNota)
+                alistPreNota[x,1] := ! alistPreNota[x,1]
+            next x
+        else
+            alistPreNota[nPos,1] := ! alistPreNota[nPos,1]
+        endif 
+        olistPreNota:refresh()
+return()
+
+
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³xPre_Nota º Autor ³ Lucas Pereira         º Data ³  12/06/17º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDescricao ³ PRE NOTA DE FATURAMENTO                                    º±±
+±±º          ³                                                            º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ AP6 IDE                                                    º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß                                                                    	
+/*/
+
+User Function xCgsPre_Nota()
+
+    Local 	cCadastro  	:= OemToAnsi("Impressao Relatorio de Descontos concedidos nos pedidos de venda")
+    Local 	aSays      	:= {}
+    Local 	aButtons   	:= {}
+    Local 	nOpca    	:= 0 
+    local   aPeds		:= {}
+    local   cTabela		:= GetNextAlias()
+    Private cPerg   	:= PadR("xPre_Nota", 10)  
+
+    ValidPerg()            
+    pergunte("xPre_Nota",.F.)  
+
+    AAdd(aSays,OemToAnsi( "  Este programa ira imprimir Pre nota de venda"))
+
+    AAdd(aButtons, { 5,.T.,{|| Pergunte(cPerg,.T. ) } } )
+    AAdd(aButtons, { 1,.T.,{|| nOpca := 1,FechaBatch() }} )
+    AAdd(aButtons, { 2,.T.,{|| nOpca := 0,FechaBatch() }} )
+
+    FormBatch( cCadastro, aSays, aButtons )
+        
+    If nOpca == 1
+        BEGINSQL alias cTabela  
+            SELECT C5_NUM FROM %TABLE:SC5%
+            WHERE C5_FILIAL =  %EXP:XFILIAL('SC5')%
+            AND C5_NUM BETWEEN %EXP:MV_PAR01% AND %EXP:MV_PAR02%
+        endsql
+        WHILE (cTabela)->(! EOF())
+            AADD(aPeds,(cTabela)->C5_NUM)
+            (cTabela)->(DBSKIP())
+        ENDDO
+        (cTabela)->(DBCLOSEAREA())
+        
+        Processa( { |lEnd| U_xPrNtImp(aPeds) })
+    Endif
+
+Return
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³xPre_Nota º Autor ³ Lucas Pereira         º Data ³  12/06/17º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDescricao ³ PRE NOTA DE FATURAMENTO                                    º±±
+±±º          ³                                                            º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ AP6 IDE                                                    º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß                                                                    	
+/*/
+
+
+user function xCgSRPrNtImp(aPeds)
+    local x
+    Private	oPrn
+    private oBrush1 	:= TBrush():New( , CLR_LIGHTGRAY )
+
+    Private oFont1		:= TFont():New( "Courier New",,10,,.F.,,,,,.F. ) 
+    Private oFont2		:= TFont():New( "Courier New",,10,,.T.,,,,,.F. ) // NEGRITO
+    Private oFont3		:= TFont():New( "Courier New",,08,,.F.,,,,,.F. )
+    Private oFont4		:= TFont():New( "Courier New",,08,,.T.,,,,,.F. ) // NEGRITO
+    //Private oFont5		:= TFont():New( "Courier New",,28,,.F.,,,,,.F. )
+    Private oFont6		:= TFont():New( "Courier New",,16,,.T.,,,,,.F. ) // NEGRITO
+    Private oFont7		:= TFont():New( "Courier New",,18,,.T.,,,,,.F. ) // NEGRITO
+
+    Private oFont8		:= TFont():New( "Times New Roman",,10,,.T.,,,,.T.,.F. ) // NEGRITO
+    //Private oFont9		:= TFont():New( "Times New Roman",,14,,.T.,,,,.T.,.F. ) // NEGRITO
+    //Private oFont10		:= TFont():New( "Times New Roman",,11,,.F.,,,,,.F. )
+    Private oFont11		:= TFont():New( "Times New Roman",,10,,.F.,,,,.T.,.F. ) 
+    //Private oFont12		:= TFont():New( "Times New Roman",,11,,.T.,,,,.T.,.F. ) // NEGRITO
+    //Private oFont13		:= TFont():New( "Times New Roman",,08,,.F.,,,,.T.,.F. ) // NEGRITO  
+    private NPAG 		:= 1
+    private _nLin       := 400
+
+    oPrn:= TMSPrinter():New()
+    oPrn:setPortrait()
+    oPrn:SetPaperSize(9) // A4
+    oPrn:Setup()
+
+    procregua(len(aPeds))
+    for x:=1 to len(aPeds)
+        incproc()
+        oPrn:StartPage() 
+        _nLin := 400
+        
+        DBSELECTAREA("SC5")
+        DBSETORDER(1)
+        DBSEEK(XFILIAL("SC5")+aPeds[x])
+        
+        DBSELECTAREA("SA1")
+        DBSETORDER(1)
+        DBSEEK(XFILIAL("SA1")+SC5->(C5_CLIENTE+C5_LOJACLI))
+        
+        DBSELECTAREA("SA3")
+        DBSETORDER(1)
+        DBSEEK(XFILIAL("SA3")+SC5->(C5_VEND1))
+
+        DBSELECTAREA("SA4")
+        DBSETORDER(1)
+        DBSEEK(XFILIAL("SA4")+SC5->(C5_TRANSP))
+            
+        PrNtCabec(aPeds[x])
+        PrNtDetail(aPeds[x])
+        
+        
+        oPrn:EndPage()
+    next x
+
+    Set Filter to
+    oPrn:Preview()
+    MS_FLUSH()
+
+
+return()
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³xPre_Nota º Autor ³ Lucas Pereira         º Data ³  12/06/17º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDescricao ³ PRE NOTA DE FATURAMENTO                                    º±±
+±±º          ³                                                            º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ AP6 IDE                                                    º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß                                                                    	
+/*/
+
+
+static function PrNtCabec(cPedido)
+
+    cBitMap:= "lgrl01.BMP"
+    cBitIso:= ""
+    cBitSel:= "LOGO_TOPFIVE.BMP"   
+
+    oPrn:Say(040,0700,"ALIMENTOS TIA SONIA",oFont7,100) 
+    oPrn:Say(120,0760,"PEDIDO Nº - "+cPedido,oFont6,100) 	
+    oPrn:SayBitmap(050,044,cBitMap,200,125 ) //700,300
+    oPrn:Say(040,2000,"Emissão .: "+ DtoC(Date()),oFont8,100) 
+    oPrn:Say(080,2000,"Hora      .: "+ Time(),oFont8,100)
+    oPrn:Say(120,2000,"Página   .: "+ StrZero(nPag,2),oFont8,100)
+    oPrn:Box(040+0000,0040,185+0000,2370)
+    oPrn:Box(040+0000,0040,185+0000,1990)
+
+    oPrn:Say(0215,0040,"CLIENTE..:",oFont2,100)
+    oPrn:Say(0265,0040,"VENDEDOR.:",oFont2,100)
+    oPrn:Say(0315,0040,"TRANSPOR.:",oFont2,100) 
+
+
+    oPrn:Say(0215,0280,substr(SA1->(A1_COD+'-'+A1_NOME),1,30),oFont1,100)
+    oPrn:Say(0265,0280,substr(SA3->(A3_COD+'-'+A3_NOME),1,30),oFont1,100)
+    oPrn:Say(0315,0280,substr(SA4->(A4_COD+'-'+A4_NOME),1,30),oFont1,100) 
+
+    
+    oPrn:Say(0215,1150,"EMISSAO..:",oFont2,100)
+    oPrn:Say(0265,1150,"COND.PAG.:",oFont2,100) 
+    oPrn:Say(0315,1150,"TABELA...:",oFont2,100)
+
+    oPrn:Say(0215,1390,DTOC(SC5->C5_EMISSAO),oFont1,100)
+    oPrn:Say(0265,1390,SC5->C5_CONDPAG		,oFont1,100) 
+    oPrn:Say(0315,1390,SC5->C5_TABELA		,oFont1,100)
+
+    oPrn:Say(0215,1850,"FRETE....:",oFont2,100)
+    oPrn:Say(0265,1850,"DESPESAS.:",oFont2,100) 
+    oPrn:Say(0315,1850,"VOLUME...:",oFont2,100) 
+
+    oPrn:Say(0215,2090,ALLTRIM( TRANSFORM(SC5->C5_FRETE, "@E 9,999,999.99") ),oFont1,100)
+    oPrn:Say(0265,2090,ALLTRIM( TRANSFORM(SC5->C5_DESPESA,"@E 9,999,999.99") ),oFont1,100) 
+    oPrn:Say(0315,2090,ALLTRIM( TRANSFORM(SC5->C5_VOLUME1,"@E 9,999,999.99") ),oFont1,100) 
+
+
+    oPrn:Say(0365,0040,"OBS.MP...:",oFont2,100) 
+    oPrn:Say(0365,1150,"Nº.P/CLI.:",oFont2,100) 
+    oPrn:Say(0365,1850,"Nº.P/MP..:",oFont2,100) 
+
+    oPrn:Say(0365,0280, substr(SC5->C5_XMPOBS,1,40)	,oFont1,100) 
+    oPrn:Say(0365,1390,SC5->C5_NPED ,oFont1,100) 
+    oPrn:Say(0365,2090,SC5->C5_XMPNUM,oFont1,100) 
+
+
+    oPrn:Say(0415,0040,"Municip.:",oFont2,100) 
+    oPrn:Say(0415,0280,SA1->A1_MUN,oFont1,100) 
+
+    _nLin += 80
+
+
+    oPrn:line(_nLin,0040,_nLin,2370)
+    oPrn:FillRect( {_nLin,0040,_nLin+030,2370}, oBrush1 )
+
+    oPrn:Say( _nLin , 0040 ,"ITEM"			,oFont4,100)
+    oPrn:Say( _nLin , 0140 ,"CODIGO"		,oFont4,100) 
+    oPrn:Say( _nLin , 0300 ,"DESCRICAO"		,oFont4,100) 
+    oPrn:Say( _nLin , 1400 ,"TES"			,oFont4,100)
+    oPrn:Say( _nLin , 1500 ,"CF"			,oFont4,100) 
+    oPrn:Say( _nLin , 1600 ,"UM"			,oFont4,100)
+    oPrn:Say( _nLin , 1700 ,"LOC"			,oFont4,100)  
+    oPrn:Say( _nLin , 1800 ,"QUANT"			,oFont4,100)
+    oPrn:Say( _nLin , 2000 ,"PRC.UNIT"		,oFont4,100) 
+    oPrn:Say( _nLin , 2200 ,"TOTAL"			,oFont4,100)  
+
+    _nLin += 30
+    oPrn:line(_nLin,0040,_nLin,2370)
+
+
+return()
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³xPre_Nota º Autor ³ Lucas Pereira         º Data ³  12/06/17º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDescricao ³ PRE NOTA DE FATURAMENTO                                    º±±
+±±º          ³                                                            º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ AP6 IDE                                                    º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß                                                                    	
+/*/
+
+static function PrNtDetail(cPedido)
+
+    LOCAL aTotais 	:= {0,0}
+    local aImpost	:= aImpsPed(cPedido,1)
+    local aPeso		:= {0,0}
+
+    DBSELECTAREA("SC6")
+    DBSETORDER(1)
+    DBSEEK(XFILIAL('SC6')+cPedido)
+
+    WHILE SC6->( ! EOF()) .AND. SC6->C6_NUM == cPedido .AND. SC6->C6_FILIAL == XFILIAL("SC6")
+        
+        oPrn:Say( _nLin , 0040 ,SC6->C6_ITEM								,oFont3,100)
+        oPrn:Say( _nLin , 0140 ,SC6->C6_PRODUTO								,oFont3,100) 
+        oPrn:Say( _nLin , 0300 ,SC6->C6_DESCRI								,oFont3,100) 
+        oPrn:Say( _nLin , 1400 ,SC6->C6_TES									,oFont3,100)
+        oPrn:Say( _nLin , 1500 ,SC6->C6_CF									,oFont3,100) 
+        oPrn:Say( _nLin , 1600 ,SC6->C6_UM									,oFont3,100)
+        oPrn:Say( _nLin , 1700 ,SC6->C6_LOCAL								,oFont3,100)  
+        oPrn:Say( _nLin , 1800 ,ALLTRIM( TRANSFORM(SC6->C6_QTDVEN,"@E 9,999,999.99") )	,oFont3,100)
+        oPrn:Say( _nLin , 2000 ,ALLTRIM( TRANSFORM(SC6->C6_PRCVEN,"@E 9,999,999.99") )	,oFont3,100) 
+        oPrn:Say( _nLin , 2200 ,ALLTRIM( TRANSFORM(SC6->C6_VALOR,"@E 9,999,999.99") )	,oFont3,100) 
+        
+        
+        aPeso[1]   += SC6->C6_QTDVEN * POSICIONE("SB1",1,XFILIAL("SB1")+SC6->C6_PRODUTO,"B1_PESO")
+        aPeso[2]   += SC6->C6_QTDVEN * POSICIONE("SB1",1,XFILIAL("SB1")+SC6->C6_PRODUTO,"B1_PESBRU")
+            
+        aTotais[1] += SC6->C6_QTDVEN
+        aTotais[2] += SC6->C6_VALOR
+        
+        _nLin += 30
+        
+        SC6->( DBSKIP() )
+        If _nLin > 3000
+            oPrn:Say(_nLin,1200,"* * * * CONTINUA NA PRÓXIMA PÁGINA * * * *"       ,oFont8,100)
+            _nLin := 400
+            nPag  := nPag+1
+            oPrn:EndPage()
+            oPrn:StartPage()
+            PrNtCabec(cPedido)//IMPRIME CABECALHO
+        Endif  
+    ENDDO
+
+
+
+    _nLin += 30
+    oPrn:Say( _nLin , 040 ,'TOTAIS' ,oFont3,100)
+    oPrn:line(_nLin,0040,_nLin,2370)
+    oPrn:Say( _nLin , 1800 ,ALLTRIM( TRANSFORM(aTotais[1],"@E 9,999,999.99") )	,oFont3,100)
+    oPrn:Say( _nLin , 2200 ,ALLTRIM( TRANSFORM(aTotais[2],"@E 9,999,999.99") )	,oFont3,100)
+    _nLin += 30
+    oPrn:line(_nLin,0040,_nLin,2370)
+
+
+
+
+    If _nLin > 2000
+        oPrn:Say(_nLin,1200,"* * * * CONTINUA NA PRÓXIMA PÁGINA * * * *"       ,oFont3,100)
+        _nLin := 400
+        nPag  := nPag+1
+        oPrn:EndPage()
+        oPrn:StartPage()
+        PrNtCabec(cPedido)//IMPRIME CABECALHO
+    Endif 
+
+
+    _nLin += 100
+    oPrn:Say( _nLin , 040 ,'IMPOSTOS' ,oFont3,100)
+    _nLin += 30
+
+
+    oPrn:Say( _nLin , 0050 ,'BASE ICMS' 	,oFont3,100)
+    oPrn:Say( _nLin , 0400 ,'VL ICMS'		,oFont3,100)
+    oPrn:Say( _nLin , 0750 ,'BASE ICM/RET' 	,oFont3,100)
+    oPrn:Say( _nLin , 1100 ,'VL ICM/RET' 	,oFont3,100)
+    oPrn:Say( _nLin , 1450 ,'BASE IPI' 		,oFont3,100)
+    oPrn:Say( _nLin , 1800 ,'VL IPI' 		,oFont3,100)
+    oPrn:Say( _nLin , 2150 ,'TOTAL' 		,oFont3,100)
+
+    _nLin += 30
+    oPrn:line(_nLin,0040,_nLin,2370)
+
+    oPrn:Say( _nLin , 0050 ,ALLTRIM(  TRANSFORM( aImpost[3] , "@E 9,999,999.99") )			,oFont3,100)
+    oPrn:Say( _nLin , 0400 ,ALLTRIM(  TRANSFORM( aImpost[4]	, "@E 9,999,999.99") ) 			,oFont3,100)
+    oPrn:Say( _nLin , 0750 ,ALLTRIM(  TRANSFORM( aImpost[5] , "@E 9,999,999.99") ) 			,oFont3,100)
+    oPrn:Say( _nLin , 1100 ,ALLTRIM(  TRANSFORM( aImpost[6] , "@E 9,999,999.99") ) 			,oFont3,100)
+    oPrn:Say( _nLin , 1450 ,ALLTRIM(  TRANSFORM( aImpost[1] , "@E 9,999,999.99") ) 			,oFont3,100)
+    oPrn:Say( _nLin , 1800 ,ALLTRIM(  TRANSFORM( aImpost[2] , "@E 9,999,999.99") ) 			,oFont3,100)
+    oPrn:Say( _nLin , 2150 ,ALLTRIM(  TRANSFORM( aImpost[7]	, "@E 9,999,999.99") ) 			,oFont3,100)
+
+    _nLin += 30
+    oPrn:line(_nLin,0040,_nLin,2370)
+    _nLin += 30
+                        
+                        
+    oPrn:Say( _nLin , 0040 ,'PESO LIQ --> ' + TRANSFORM(aPeso[1],"@E 9,999,999.99")	,oFont3,100)
+    _nLin += 30
+    oPrn:Say( _nLin , 0040 ,'PESO BRU --> '	+ TRANSFORM(aPeso[2],"@E 9,999,999.99")	,oFont3,100)
+
+return()
+
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ AjustaSX1   ³ Autor ³ Lucas Pereira      ³ Data ³ 19/05/14 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Ajustar as perguntas no SX1.					              ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ AjustaSX1		                                          ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ RGPR01, Localizacoes...                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+
+
+static function aImpsPed(cNumPed,nTipo)
+    Local aArea     := GetArea()
+    Local aAreaC5   := SC5->(GetArea())
+    Local aAreaB1   := SC6->(GetArea())
+    Local aAreaC6   := SB1->(GetArea())
+    Local cQryIte   := ""
+    Local aImpPed   := {}
+    Local nNritem   := 0
+    Local nAtu
+    Default cNumPed := SC5->C5_NUM
+    Default nTipo   := 1
+     
+    //Se for no Browse, já traz o valor total
+    If nTipo == 1
+        //Seleciona agora os itens do pedido
+        cQryIte := " SELECT "
+        cQryIte += "    C6_ITEM, "
+        cQryIte += "    C6_PRODUTO "
+        cQryIte += " FROM "
+        cQryIte += "    "+RetSQLName('SC6')+" SC6 "
+        cQryIte += "    LEFT JOIN "+RetSQLName('SB1')+" SB1 ON ( "
+        cQryIte += "        B1_FILIAL = '"+FWxFilial('SB1')+"' "
+        cQryIte += "        AND B1_COD = SC6.C6_PRODUTO "
+        cQryIte += "        AND SB1.D_E_L_E_T_ = ' ' "
+        cQryIte += "    ) "
+        cQryIte += " WHERE "
+        cQryIte += "    C6_FILIAL = '"+FWxFilial('SC6')+"' "
+        cQryIte += "    AND C6_NUM = '"+cNumPed+"' "
+        cQryIte += "    AND SC6.D_E_L_E_T_ = ' ' "
+        cQryIte += " ORDER BY "
+        cQryIte += "    C6_ITEM "
+        cQryIte := ChangeQuery(cQryIte)
+        TCQuery cQryIte New Alias "QRY_ITE"
+         
+        DbSelectArea('SC5')
+        SC5->(DbSetOrder(1))
+        SC5->(DbSeek(FWxFilial('SC5') + cNumPed))
+        MaFisIni(SC5->C5_CLIENTE,;                   	// 1-Codigo Cliente/Fornecedor
+            SC5->C5_LOJACLI,;                    		// 2-Loja do Cliente/Fornecedor
+            If(SC5->C5_TIPO$'DB',"F","C"),;              // 3-C:Cliente , F:Fornecedor
+            SC5->C5_TIPO,;                               // 4-Tipo da NF
+            SC5->C5_TIPOCLI,;                        	// 5-Tipo do Cliente/Fornecedor
+            MaFisRelImp("MT100",{"SF2","SD2"}),;        // 6-Relacao de Impostos que suportados no arquivo
+            ,;                                          // 7-Tipo de complemento
+            ,;                                          // 8-Permite Incluir Impostos no Rodape .T./.F.
+            "SB1",;                                     // 9-Alias do Cadastro de Produtos - ("SBI" P/ Front Loja)
+            "MATA461")                                  // 10-Nome da rotina que esta utilizando a funcao
+         
+        //Pega o total de itens
+        QRY_ITE->(DbGoTop())
+        While ! QRY_ITE->(EoF())
+            nNritem++
+            QRY_ITE->(DbSkip())
+        EndDo
+         
+        //Preenchendo o valor total
+        QRY_ITE->(DbGoTop())
+        nTotIPI := 0
+        While ! QRY_ITE->(EoF())
+            //Pega os tratamentos de impostos
+            SB1->(DbSeek(FWxFilial("SB1")+QRY_ITE->C6_PRODUTO))
+            SC6->(DbSeek(FWxFilial("SC6")+cNumPed+QRY_ITE->C6_ITEM))
+             
+            MaFisAdd(   SC6->C6_PRODUTO,;                    // 1-Codigo do Produto              ( Obrigatorio )
+                        SC6->C6_TES,;                        // 2-Codigo do TES                  ( Opcional )
+                        SC6->C6_QTDVEN,;               		  // 3-Quantidade                     ( Obrigatorio )
+                        SC6->C6_PRCVEN,;                	 // 4-Preco Unitario                 ( Obrigatorio )
+                        SC6->C6_VALDESC,;                    // 5 desconto
+                        SC6->C6_NFORI,;                     // 6-Numero da NF Original           ( Devolucao/Benef )
+                        SC6->C6_SERIORI,;                    // 7-Serie da NF Original           ( Devolucao/Benef )
+                        0,;                                 // 8-RecNo da NF Original no arq SD1/SD2
+                        SC5->C5_FRETE/nNritem,;              // 9-Valor do Frete do Item         ( Opcional )
+                        SC5->C5_DESPESA/nNritem,;            // 10-Valor da Despesa do item      ( Opcional )
+                        SC5->C5_SEGURO/nNritem,;        	// 11-Valor do Seguro do item       ( Opcional )
+                        0,;                                 // 12-Valor do Frete Autonomo       ( Opcional )
+                        SC6->C6_VALOR,;                     // 13-Valor da Mercadoria            ( Obrigatorio )
+                        0,;                                 // 14-Valor da Embalagem            ( Opcional )
+                        0,;                                 // 15-RecNo do SB1
+                        0)                                  // 16-RecNo do SF4
+             
+            //nItem++
+            QRY_ITE->(DbSkip())
+        EndDo
+         
+        //Pegando totais
+        aImpPed := {MaFisRet(,'NF_BASEIPI'),;
+      				MaFisRet(,'NF_VALIPI'),;
+      				MaFisRet(,'NF_BASEICM'),;
+         			MaFisRet(,'NF_VALICM'),;
+         			MaFisRet(,'NF_BASESOL'),; 
+         			MaFisRet(,'NF_VALSOL'),;
+         			MaFisRet(,'NF_TOTAL')}
+         
+        QRY_ITE->(DbCloseArea())
+        MaFisEnd()
+    Else
+        MaFisIni(M->C5_CLIENTE,;                 // 1-Codigo Cliente/Fornecedor
+            M->C5_LOJACLI,;                  // 2-Loja do Cliente/Fornecedor
+            If(M->C5_TIPO$'DB',"F","C"),;            // 3-C:Cliente , F:Fornecedor
+            M->C5_TIPO,;                             // 4-Tipo da NF
+            M->C5_TIPOCLI,;                          // 5-Tipo do Cliente/Fornecedor
+            MaFisRelImp("MT100",{"SF2","SD2"}),;        // 6-Relacao de Impostos que suportados no arquivo
+            ,;                                          // 7-Tipo de complemento
+            ,;                                          // 8-Permite Incluir Impostos no Rodape .T./.F.
+            "SB1",;                                     // 9-Alias do Cadastro de Produtos - ("SBI" P/ Front Loja)
+            "MATA461")                                  // 10-Nome da rotina que esta utilizando a funcao
+         
+         
+        nNritem := Len(aCols)
+         
+        //Preenchendo o valor total
+        nTotIPI := 0
+        For nAtu := 1 To Len(aCols)
+            //Pega os tratamentos de impostos
+            SB1->(DbSeek(FWxFilial("SB1")+aCols[nAtu][GDFieldPos("C6_PRODUTO")]))
+             
+            MaFisAdd(   aCols[nAtu][GDFieldPos("C6_PRODUTO")],;                     // 1-Codigo do Produto              ( Obrigatorio )
+                        aCols[nAtu][GDFieldPos("C6_TES")],;                         // 2-Codigo do TES                  ( Opcional )
+                        aCols[nAtu][GDFieldPos("C6_QTDVEN")],;                  // 3-Quantidade                     ( Obrigatorio )
+                        aCols[nAtu][GDFieldPos("C6_PRCVEN")],;                  // 4-Preco Unitario                 ( Obrigatorio )
+                        aCols[nAtu][GDFieldPos("C6_VALDESC")],;                 // 5 desconto
+                        aCols[nAtu][GDFieldPos("C6_NFORI")],;                     // 6-Numero da NF Original            ( Devolucao/Benef )
+                        aCols[nAtu][GDFieldPos("C6_SERIORI")],;                 // 7-Serie da NF Original           ( Devolucao/Benef )
+                        0,;                                 // 8-RecNo da NF Original no arq SD1/SD2
+                        M->C5_FRETE/nNritem,;                // 9-Valor do Frete do Item         ( Opcional )
+                        M->C5_DESPESA/nNritem,;          // 10-Valor da Despesa do item      ( Opcional )
+                        M->C5_SEGURO/nNritem,;           // 11-Valor do Seguro do item       ( Opcional )
+                        0,;                                 // 12-Valor do Frete Autonomo       ( Opcional )
+                        aCols[nAtu][GDFieldPos("C6_VALOR")],;                     // 13-Valor da Mercadoria             ( Obrigatorio )
+                        0,;                                 // 14-Valor da Embalagem            ( Opcional )
+                        0,;                                 // 15-RecNo do SB1
+                        0)                                  // 16-RecNo do SF4
+             
+        Next
+         
+        //Pegando totais
+        aImpPed := {MaFisRet(,'NF_BASEIPI'),;
+      				MaFisRet(,'NF_VALIPI'),;
+      				MaFisRet(,'NF_BASEICM'),;
+         			MaFisRet(,'NF_VALICM'),;
+         			MaFisRet(,'NF_BASESOL'),; 
+         			MaFisRet(,'NF_VALSOL'),;
+         			MaFisRet(,'NF_TOTAL')}
+        MaFisEnd()
+    EndIf
+
+     
+    RestArea(aAreaC6)
+    RestArea(aAreaB1)
+    RestArea(aAreaC5)
+    RestArea(aArea)
+Return aImpPed
+
+
+
+
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ AjustaSX1   ³ Autor ³ Lucas Pereira      ³ Data ³ 19/05/14 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Ajustar as perguntas no SX1.					              ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ AjustaSX1		                                          ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ RGPR01, Localizacoes...                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Static Function ValidPerg()
+    LOCAL aRegs 	:= {}
+    LOCAL aAreaOld 	:= GetArea()
+    Local nX        := 0 
+
+
+    AADD(aRegs,{"De Pedido       ?","De Pedido       ?","De Pedido       ?","mv_ch1","C", 6,0,0,"G",""  ,"mv_par01",""	 ,"","","","",""    ,"","","","","","","","SC5","",""})
+    AADD(aRegs,{"Até Pedido      ?","Até Pedido      ?","Até Pedido      ?","mv_ch1","C", 6,0,0,"G",""  ,"mv_par01",""	,"","","","",""     ,"","","","","","","","SC5","",""})
+
+    dbSelectArea("SX1")
+    dbSetOrder(1)
+    For nX:=1 to Len(aRegs)
+        If !(dbSeek(cPerg+StrZero(nx,2)))
+            RecLock("SX1",.T.)
+            Replace X1_GRUPO    with cPerg
+            Replace X1_ORDEM   	with StrZero(nx,2)
+            Replace x1_pergunte	with aRegs[nx][01]
+            Replace x1_perspa   with aRegs[nx][02]
+            Replace x1_pereng   with aRegs[nx][03]
+            Replace x1_variavl	with aRegs[nx][04]
+            Replace x1_tipo		with aRegs[nx][05]
+            Replace x1_tamanho	with aRegs[nx][06]
+            Replace x1_decimal	with aRegs[nx][07]
+            Replace x1_presel   with aRegs[nx][08]
+            Replace x1_gsc      with aRegs[nx][09]
+            Replace x1_valid    with aRegs[nx][10]
+            Replace x1_var01    with aRegs[nx][11]
+            Replace x1_def01    with aRegs[nx][12]
+            Replace x1_defspa1	with aRegs[nx][13]
+            Replace x1_defeng1	with aRegs[nx][14]
+            Replace x1_cnt01    with aRegs[nx][15]
+            Replace x1_var02    with aRegs[nx][16]
+            Replace x1_def02    with aRegs[nx][17]
+            Replace x1_defspa2	with aRegs[nx][18]
+            Replace x1_defeng2	with aRegs[nx][19]
+            Replace x1_cnt02    with aRegs[nx][20]
+            Replace x1_var03    with aRegs[nx][21]
+            Replace x1_def03    with aRegs[nx][22]
+            Replace x1_defspa3	with aRegs[nx][23]
+            Replace x1_defeng3	with aRegs[nx][24]
+            Replace x1_f3     	with aRegs[nx][25]
+            Replace x1_grpsxg 	with aRegs[nx][26]
+            Replace x1_def04 	with aRegs[nx][27]
+                
+            MsUnlock()
+        Endif
+    Next
+
+    RestArea( aAreaOld )
+return()

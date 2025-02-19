@@ -1,0 +1,299 @@
+#INCLUDE "rwmake.ch"
+#INCLUDE "protheus.ch" 
+#INCLUDE "TOPCONN.CH
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
+ฑฑบPrograma  ณImpress   บAutor  ณMicrosiga           บ Data ณ  09/10/08   บฑฑ
+ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
+ฑฑบDesc.     ณ     INICIO DA IMPRESSีES                                   บฑฑ
+ฑฑบ          ณ                                                            บฑฑ
+ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
+ฑฑบUso       ณ AP                                                         บฑฑ
+ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+User FUNCTION xCgsRBloqueados()
+    private nPag 	:= 1
+    PRIVATE _nLin 	:= 0050
+    PRIVATE oBrush1 := TBrush():New( , CLR_LIGHTGRAY ) 
+
+    oPrn:= TMSPrinter():New()
+    oPrn:setPortrait()
+    oPrn:SetPaperSize(9) // A4
+    oPrn:Setup()
+    oPrn:StartPage()
+
+    CabecBloq(oPrn,2) 
+    detailBloq(oPrn,2) 
+
+    _nLin := 0050
+    nPag  := 1
+    oPrn:EndPage()
+    oPrn:StartPage()
+
+    CabecBloq(oPrn,3)
+    detailBloq(oPrn,3)
+
+    _nLin := 0050
+    nPag  := 1
+    oPrn:EndPage()
+    oPrn:StartPage()  
+
+    CabecBloq(oPrn,1)
+    detailBloq(oPrn,1)
+
+    Set Filter to
+    oPrn:EndPage()
+    oPrn:Preview()
+    MS_FLUSH()
+
+
+return()   
+
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
+ฑฑบPrograma  ณImpress   บAutor  ณMicrosiga           บ Data ณ  09/10/08   บฑฑ
+ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
+ฑฑบDesc.     ณ     INICIO DA IMPRESSีES                                   บฑฑ
+ฑฑบ          ณ                                                            บฑฑ
+ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
+ฑฑบUso       ณ AP                                                         บฑฑ
+ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+STATIC FUNCTION CabecBloq(oPrn,nOpc) 
+            
+    cBitMap:= "lgrl01.BMP"
+    cBitIso:= ""
+    cBitSel:= "LOGO_TOPFIVE.BMP"   
+
+    oPrn:Say(040,0700,"BIOLEVE",oFont7,100) 
+    if nOpc == 1
+        oPrn:Say(120,0390,"PEDIDOS BLOQUEADOS ESTOQUE - ANALIT.MONT.CARGA",oFont6,100) 	
+    elseif nOpc == 2 
+        oPrn:Say(120,0390,"PEDIDOS BLOQUEADOS CREDITO - MONTAGEM DE CARGA",oFont6,100) 
+    elseif nOpc == 3 
+        oPrn:Say(120,0390,"PEDIDOS BLOQUEADOS ESTOQUE - SINTET.MONT.CARGA",oFont6,100) 		 
+    ENDIF
+    oPrn:SayBitmap(050,044,cBitMap,200,125 ) //700,300
+    oPrn:Say(040,2000,"Emissใo .: "+ DtoC(Date()),oFont8,100) 
+    oPrn:Say(080,2000,"Hora      .: "+ Time(),oFont8,100)
+    oPrn:Say(120,2000,"Pแgina   .: "+ StrZero(nPag,2),oFont8,100)
+    oPrn:Box(040+0000,0040,185+0000,2370)
+    oPrn:Box(040+0000,0040,185+0000,1990)
+
+    IF nOpc == 3  
+        oPrn:Say(0215,0040,"PRODUTO"	   		,oFont8,100  )
+        oPrn:Say(0215,0200,"DESCRICAO"	   		,oFont8,100  ) 
+        oPrn:Say(0215,1280,"QTD.PED"	   		,oFont8,100  )
+        oPrn:Say(0215,1480,"SALDO"				,oFont8,100  )
+        oPrn:Say(0215,1680,"RESERVA"			,oFont8,100  )
+        oPrn:Say(0215,1880,"SD.EM.PED"	   		,oFont8,100  ) 
+        oPrn:Say(0215,2080,"NECESSIDADE"		,oFont8,100  )   
+    ELSE
+        oPrn:Say(0215,0040,"PEDIDO"	   		,oFont8,100  )
+        oPrn:Say(0215,0200,"ENTREGA"		,oFont8,100  )
+        oPrn:Say(0215,0450,"CLIENTE"		,oFont8,100  ) 
+        oPrn:Say(0215,1000,"VENDEDOR"	 	,oFont8,100  )
+        oPrn:Say(0215,1600,"CIDADE"	  		,oFont8,100  )
+        //oPrn:Say(0215,1900,"BAIRRO"	  		,oFont8,100  ) 
+        oPrn:Say(0215,2160,"VALOR"	  		,oFont8,100  )
+    ENDIF
+		
+Return()  
+
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
+ฑฑบPrograma  ณImpress   บAutor  ณMicrosiga           บ Data ณ  09/10/08   บฑฑ
+ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
+ฑฑบDesc.     ณ     INICIO DA IMPRESSีES                                   บฑฑ
+ฑฑบ          ณ                                                            บฑฑ
+ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
+ฑฑบUso       ณ AP                                                         บฑฑ
+ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+STATIC FUNCTION detailBloq(oPrn , nOpc )   
+    local x
+    local cPedsSint := ""   
+    local lVirgula  := .T.
+    if empty(oCgTela:aPedBloqueados[1,3])
+        return()
+    endif
+    _nLin += 0050      
+    IF nOpc == 1
+        for x:=1 to len(oCgTela:aPedBloqueados)
+            if oCgTela:aPedBloqueados[x,1] <> 'C'     
+            
+                oPrn:FillRect( {_nLin+210,0040,_nLin+210+050,2380}, oBrush1 )   
+                
+                oPrn:Say(_nLin+0215,0050,oCgTela:aPedBloqueados[x,3]	  			,oFont8,100  )
+                oPrn:Say(_nLin+0215,0200,dtoc(oCgTela:aPedBloqueados[x,4])		,oFont8,100  )
+                oPrn:Say(_nLin+0215,0500,oCgTela:aPedBloqueados[x,5]	  			,oFont8,100  )
+                oPrn:Say(_nLin+0215,0700,substr(oCgTela:aPedBloqueados[x,6],1,25)	,oFont8,100  )
+                oPrn:Say(_nLin+0215,1500,oCgTela:aPedBloqueados[x,7]	  			,oFont8,100  ) 
+                oPrn:Say(_nLin+0215,1600,oCgTela:aPedBloqueados[x,8]	  			,oFont8,100  )
+                oPrn:Say(_nLin+0215,1900,oCgTela:aPedBloqueados[x,9]	   			,oFont8,100  ) 
+                oPrn:Say(_nLin+0215,2100,TRANSFORM(oCgTela:aPedBloqueados[x,15],"@E 999,999,999.99")		,oFont3,100  )      	
+                
+                _nLin += 050  
+            
+                oPrn:Say(_nLin+0215,0200,"PRODUTO"		,oFont8,100  )
+                oPrn:Say(_nLin+0215,0400,"DESCRICAO"	,oFont8,100  )
+                oPrn:Say(_nLin+0215,1280,"QT.VEND"		,oFont8,100  )
+                oPrn:Say(_nLin+0215,1480,"SLD.EST"		,oFont8,100  )
+                oPrn:Say(_nLin+0215,1680,"RESERVA"		,oFont8,100  )
+                oPrn:Say(_nLin+0215,1880,"DISPON."	,oFont8,100  )
+                oPrn:Say(_nLin+0215,2080,"NECESS."	,oFont8,100  ) 
+                
+                _nLin += 050       
+                
+                
+                cQuery := " SELECT C9_PRODUTO, " 
+                cQuery += " B1_DESC,        "
+                cQuery += " C9_QTDLIB,        "
+                cQuery += " B2_QATU  AS SALDAATU , " 
+                cQuery += " B2_RESERVA   AS RESERVA, " 
+                cQuery += " B2_QATU - B2_RESERVA   AS DISPONIVEL, "
+                cQuery += " C9_QTDLIB - (B2_QATU - B2_RESERVA )  AS NECESSIADE " 
+                cQuery += " FROM "+retsqlname("SC9")+" SC9 "
+                cQuery += " INNER JOIN "+retsqlname("SB2")+" SB2 ON B2_COD = C9_PRODUTO AND B2_LOCAL = C9_LOCAL AND SB2.D_E_L_E_T_ <> '*' AND B2_FILIAL = C9_FILIAL "
+                cQuery += " INNER JOIN "+retsqlname("SB1")+" SB1 ON B1_COD = C9_PRODUTO AND SB1.D_E_L_E_T_ <> '*'    "
+                cQuery += " WHERE SC9.D_E_L_E_T_ <> '*' AND C9_PEDIDO = '"+oCgTela:aPedBloqueados[x,3]+"'"
+                cQuery += " and C9_BLEST <> ' ' and C9_FILIAL = '"+XFILIAL("SC9")+"'"
+                
+                cQuery := ChangeQuery(cQuery)
+                dbUseArea(.T.,"TOPCONN",TcGenQry(,,cQuery),"TMP",.T.,.T.) 
+                
+                                
+                While TMP->(!Eof())
+                    oPrn:Say(_nLin+0215,0200,TMP->C9_PRODUTO								,oFont3,100  )
+                    oPrn:Say(_nLin+0215,0400,substr(TMP->B1_DESC,1,40)     				,oFont3,100  )
+                    oPrn:Say(_nLin+0215,1180,TRANSFORM(TMP->C9_QTDLIB 	,"@E 999,999,999.99")	,oFont3,100  ) 
+                    oPrn:Say(_nLin+0215,1380,TRANSFORM(TMP->SALDAATU  	,"@E 999,999,999.99")	,oFont3,100  )
+                    oPrn:Say(_nLin+0215,1580,TRANSFORM(TMP->RESERVA		,"@E 999,999,999.99")	,oFont3,100  )
+                    oPrn:Say(_nLin+0215,1780,TRANSFORM(TMP->DISPONIVEL  ,"@E 999,999,999.99")	,oFont3,100  )
+                    oPrn:Say(_nLin+0215,1980,TRANSFORM(TMP->NECESSIADE	,"@E 999,999,999.99")	,oFont3,100  )
+                    _nLin += 050 
+                    
+                    TMP->(DBSKIP())
+                    
+                    If _nLin > 3000
+                        oPrn:Say(_nLin+0300,1200,"* * * * CONTINUA NA PRำXIMA PมGINA * * * *"       ,oFont8,100)
+                        _nLin := 0050
+                        nPag  := nPag+1
+                        oPrn:EndPage()
+                        oPrn:StartPage()
+                        CabecBloq(oPrn,1)//IMPRIME CABECALHO
+                    Endif 
+                    
+                
+                ENDDO
+                TMP->(DBCLOSEAREA())
+                oPrn:line(_nLin+210,0040,_nLin+0210,2370) 
+                _nLin += 050 
+            endif
+        next x 
+            
+    elseif nOpc == 3
+        for x:=1 to len(oCgTela:aPedBloqueados)
+            if oCgTela:aPedBloqueados[x,1] <> 'C'  
+                cPedsSint += iif( lVirgula , "'"+oCgTela:aPedBloqueados[x,3]+"'",",'"+oCgTela:aPedBloqueados[x,3]+"'")
+                lVirgula := .F.
+            endif
+        NEXT x	    
+        cQuery := " SELECT   C9_PRODUTO,   "
+        cQuery += " 	     B1_DESC,    "    
+        cQuery += " 	     SUM(C9_QTDLIB) AS C6_QTDVEN, "       
+        cQuery += " 	     B2_QATU  AS SALDAATU ,       "
+        cQuery += " 	     B2_RESERVA   AS RESERVA,     "
+        cQuery += " 	     B2_QATU - B2_RESERVA   AS DISPONIVEL, "
+        cQuery += " 	     (SUM(C9_QTDLIB) - (B2_QATU - B2_RESERVA ))  AS NECESSIADE "
+
+
+        cQuery += " FROM "+retsqlname("SC9")+"  SC9 "
+        cQuery += " INNER JOIN "+retsqlname("SB2")+"  SB2 ON B2_COD = C9_PRODUTO AND B2_LOCAL = C9_LOCAL AND SB2.D_E_L_E_T_ <> '*' AND B2_FILIAL = C9_FILIAL "
+        cQuery += " INNER JOIN "+retsqlname("SB1")+" SB1 ON B1_COD = C9_PRODUTO AND SB1.D_E_L_E_T_ <> '*'    "
+        
+        cQuery += "	WHERE SC9.D_E_L_E_T_ <> '*' "    
+        if !empty(cPedsSint)
+            cQuery += "		AND C9_PEDIDO  in ("+cPedsSint+")"
+        endif   
+        cQuery += " AND C9_FILIAL = '"+xfilial("SC9")+"'" 
+        cQuery += " and C9_BLEST <> ' ' "
+        cQuery += " GROUP BY C9_PRODUTO, "
+        cQuery += " B1_DESC,           "
+        cQuery += " B2_QATU,             "
+        cQuery += " B2_RESERVA           "
+        
+        
+        
+        cQuery := ChangeQuery(cQuery)
+        dbUseArea(.T.,"TOPCONN",TcGenQry(,,cQuery),"TMP",.T.,.T.) 
+        
+        While TMP->(!Eof())
+            oPrn:Say(_nLin+0215,0040,TMP->C9_PRODUTO								,oFont3,100  )
+            oPrn:Say(_nLin+0215,0200,substr(TMP->B1_DESC,1,50)     				,oFont3,100  )
+            oPrn:Say(_nLin+0215,1180,TRANSFORM(TMP->C6_QTDVEN 	,"@E 999,999,999.99")	,oFont3,100  ) 
+            oPrn:Say(_nLin+0215,1380,TRANSFORM(TMP->SALDAATU  	,"@E 999,999,999.99")	,oFont3,100  )
+            oPrn:Say(_nLin+0215,1580,TRANSFORM(TMP->RESERVA		,"@E 999,999,999.99")	,oFont3,100  )
+            oPrn:Say(_nLin+0215,1780,TRANSFORM(TMP->DISPONIVEL  ,"@E 999,999,999.99")	,oFont3,100  )
+            oPrn:Say(_nLin+0215,1980,TRANSFORM(TMP->NECESSIADE	,"@E 999,999,999.99")	,oFont3,100  ) 
+            
+            _nLin += 050 
+            
+            TMP->(DBSKIP())
+            
+            If _nLin > 3000
+                oPrn:Say(_nLin+0300,1200,"* * * * CONTINUA NA PRำXIMA PมGINA * * * *"       ,oFont8,100)
+                _nLin := 0050
+                nPag  := nPag+1
+                oPrn:EndPage()
+                oPrn:StartPage()
+                CabecBloq(oPrn,3)//IMPRIME CABECALHO
+            Endif 
+        ENDDO
+        TMP->(DBCLOSEAREA())
+        oPrn:line(_nLin+210,0040,_nLin+0210,2370) 
+        _nLin += 050  
+            
+    else  
+        for x:=1 to len(oCgTela:aPedBloqueados)   
+            if oCgTela:aPedBloqueados[x,1] == 'C' 
+            
+                cBlqCodVd := POSICIONE("SC5",1,XFILIAL("SC5")+oCgTela:aPedBloqueados[x,3],"C5_VEND1")
+                cBlqNomVd := POSICIONE("SA3",1,XFILIAL("SA3")+cBlqCodVd,"A3_NOME")
+            
+            
+                oPrn:Say(_nLin+0215,0040,oCgTela:aPedBloqueados[x,3]									,oFont3,100  )
+                oPrn:Say(_nLin+0215,0200,dtoc(oCgTela:aPedBloqueados[x,4])							,oFont3,100  )
+                oPrn:Say(_nLin+0215,0450,oCgTela:aPedBloqueados[x,5]+"-"+substr(oCgTela:aPedBloqueados[x,6],1,20)	,oFont3,100  )
+                oPrn:Say(_nLin+0215,1000,cBlqCodVd+"-"+substr(cBlqNomVd,1,25)			,oFont3,100  )
+                oPrn:Say(_nLin+0215,1600,ALLTRIM(oCgTela:aPedBloqueados[x,8])+"/"+oCgTela:aPedBloqueados[x,7]	 	,oFont3,100  ) 
+                //oPrn:Say(_nLin+0215,1900,oCgTela:aPedBloqueados[x,9]	  								,oFont3,100  ) 
+                oPrn:Say(_nLin+0215,2100,TRANSFORM(oCgTela:aPedBloqueados[x,15],"@E 999,999,999.99")	,oFont3,100  ) 
+                _nLin += 050 
+                If _nLin > 3000
+                    oPrn:Say(_nLin+0300,1200,"* * * * CONTINUA NA PRำXIMA PมGINA * * * *"       ,oFont8,100)
+                    _nLin := 0050
+                    nPag  := nPag+1
+                    oPrn:EndPage()
+                    oPrn:StartPage()
+                    CabecBloq(oPrn,2)//IMPRIME CABECALHO
+                Endif 
+                
+            endif 
+        next x
+    endif  
+return() 

@@ -1,0 +1,200 @@
+#INCLUDE "Protheus.ch"
+#INCLUDE "fwbrowse.ch"
+
+#DEFINE ENTER CHR(13)+CHR(10)
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ xCargas      ³ Autor ³ Lucas Pereira      ³ Data ³ 19/05/15 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Ajustar as perguntas no SX1.					              ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ AjustaSX1		                                          ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ RGPR01, Localizacoes...                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/   
+
+user function xCgsProxNum()  
+LOCAL rArea	    := getarea()
+local cCod 		:= GETSXENUM("ZA4","ZA4_CODCARG") 
+local lExist 	:= .T. 	 
+LOCAL cTabela	:= GetNextAlias()
+
+WHILE lExist
+	BEGINSQL ALIAS cTabela
+		SELECT ZA4_CODCARG FROM %TABLE:ZA4%
+		WHERE %NOTDEL% AND ZA4_CODCARG = %EXP:cCod% AND ZA4_FILIAL = %EXP:XFILIAL('ZA4')%
+	ENDSQL
+	IF (cTabela)->(EOF())
+		lExist := .F. 
+	ELSE 
+		ConfirmSX8()
+		lExist 	:= .T.
+		cCod 	:= GETSXENUM("ZA4","ZA4_CODCARG") 
+	ENDIF
+	(cTabela)->(dbclosearea())
+ENDDO
+restarea(rArea)
+return(cCod)
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ xCargas      ³ Autor ³ Lucas Pereira      ³ Data ³ 19/05/15 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Ajustar as perguntas no SX1.					              ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ AjustaSX1		                                          ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ RGPR01, Localizacoes...                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/   
+
+
+user function xCgsbloqPed(nPedido,cFil)
+	LOCAL blqEst 
+	LOCAL BlqCre 
+	local cRet
+
+	//Verifica credito
+	cQuery := " select DISTINCT "
+	cQuery += " CASE WHEN C9_BLCRED = '  ' "
+	cQuery += " THEN 'L' else 'C' end as C9_BLCRED "
+	cQuery += " from "+RETSQLNAME("SC9")+" SC9 "
+	cQuery += " WHERE SC9.D_E_L_E_T_ <> '*'
+	cQuery += " AND C9_PEDIDO = '"+nPedido+"'"
+	cQuery += " AND C9_FILIAL = '"+cFil+"'"
+	cQuery += " and C9_BLCRED <> '10' "
+
+	cQuery := ChangeQuery(cQuery)
+	dbUseArea(.T.,"TOPCONN",TcGenQry(,,cQuery),"TMP",.T.,.T.) 
+
+	DBSELECTAREA("TMP")
+		BlqCre :=  TMP->C9_BLCRED
+	TMP->(dbclosearea())
+
+	//Verifica credito
+	cQuery := " select DISTINCT "
+	cQuery += " CASE WHEN C9_BLEST = '  ' "
+	cQuery += " THEN 'L' else 'E' end as C9_BLEST  "
+	cQuery += " from "+RETSQLNAME("SC9")+" SC9 "
+	cQuery += " WHERE SC9.D_E_L_E_T_ <> '*'
+	cQuery += " AND C9_PEDIDO = '"+nPedido+"'"
+	cQuery += " AND C9_FILIAL = '"+cFil+"'"
+	cQuery += " and C9_BLEST <> '10' "
+
+	cQuery := ChangeQuery(cQuery)
+	dbUseArea(.T.,"TOPCONN",TcGenQry(,,cQuery),"TMP",.T.,.T.) 
+
+	DBSELECTAREA("TMP")
+		blqEst := TMP->C9_BLEST
+	TMP->(dbclosearea())
+
+	if BlqCre == 'C'
+		cRet := BlqCre
+	elseif blqEst == 'E'
+		cRet := blqEst  
+	else
+		cRet := 'L'
+	endif
+
+RETURN(cRet) 
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ xCargas      ³ Autor ³ Lucas Pereira      ³ Data ³ 19/05/15 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Ajustar as perguntas no SX1.					              ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ AjustaSX1		                                          ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ RGPR01, Localizacoes...                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/   
+
+User function xCgsCalcTPed(nOpc,nPedido,cFil)  
+	local cRet := 0
+
+	cQuery := " SELECT  SUM(C6_VALOR) AS VALOR, "
+	cQuery += " 		SUM(B1_PESO*C6_QTDVEN) AS PESOL, "
+	cQuery += " 		SUM(B1_PESBRU*C6_QTDVEN) AS PESOB, " 
+	cQuery += " 		SUM(C6_QTDVEN*B5_COMPRLC*B5_LARGLC*B5_ALTURLC) AS CUBAGEM "
+	cQuery += " from "+RETSQLNAME("SC6")+" SC6 "  
+	cQuery += " LEFT JOIN "+RETSQLNAME("SB5")+" SB5 ON B5_COD = C6_PRODUTO AND SB5.D_E_L_E_T_  <> '*' AND B5_FILIAL = C6_FILIAL "
+	cQuery += " INNER JOIN "+RETSQLNAME("SB1")+" SB1 ON B1_COD = C6_PRODUTO AND SB1.D_E_L_E_T_ <> '*' "
+	cQuery += " WHERE SC6.D_E_L_E_T_ <> '*'
+	cQuery += " AND C6_NUM = '"+nPedido+"'"
+	cQuery += " AND C6_FILIAL = '"+cFil+"'" 
+
+
+	cQuery := ChangeQuery(cQuery)
+	dbUseArea(.T.,"TOPCONN",TcGenQry(,,cQuery),"TMP",.T.,.T.) 
+
+	DBSELECTAREA("TMP")
+		if nOpc == 1 //valor
+			cRet := ROUND(TMP->VALOR,2) 
+		elseif nOpc == 2 //peso liquido
+			cRet := ROUND(TMP->PESOL,2)
+		elseif nOpc == 3 //peso bruto
+			cRet := ROUND(TMP->PESOB,2)  
+		elseif nOpc == 4 //peso bruto
+			cRet := ROUND(TMP->CUBAGEM,3)
+		endif
+	TMP->(dbclosearea())
+
+RETURN(cRet) 
+
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ xCargas      ³ Autor ³ Lucas Pereira      ³ Data ³ 19/05/15 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Ajustar as perguntas no SX1.					              ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ AjustaSX1		                                          ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ RGPR01, Localizacoes...                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/   
+
+user function xCgsCalcArmPed(nPedido,cFil)  
+	local cRet := ""
+
+	cQuery := " SELECT  TOP(1) C6_LOCAL AS ARM
+	cQuery += " from "+RETSQLNAME("SC6")+" SC6 "  
+	cQuery += " WHERE SC6.D_E_L_E_T_ <> '*'
+	cQuery += " AND C6_NUM = '"+nPedido+"'"
+	cQuery += " AND C6_FILIAL = '"+cFil+"'" 
+
+
+	cQuery := ChangeQuery(cQuery)
+	dbUseArea(.T.,"TOPCONN",TcGenQry(,,cQuery),"TMP",.T.,.T.) 
+
+	DBSELECTAREA("TMP")
+
+	cRet := TMP->ARM 
+
+	TMP->(dbclosearea())
+
+RETURN(cRet) 
+
+
+
+
+

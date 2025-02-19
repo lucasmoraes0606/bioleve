@@ -1,0 +1,310 @@
+#INCLUDE "rwmake.ch"
+#INCLUDE "protheus.ch" 
+#INCLUDE "TOPCONN.CH
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
+ฑฑบPrograma  ณImpress   บAutor  ณMicrosiga           บ Data ณ  09/10/08   บฑฑ
+ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
+ฑฑบDesc.     ณ     INICIO DA IMPRESSีES                                   บฑฑ
+ฑฑบ          ณ                                                            บฑฑ
+ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
+ฑฑบUso       ณ AP                                                         บฑฑ
+ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+USER FUNCTION xCgsRPedXRota()
+    private nPag 	:= 1
+    PRIVATE _nLin 	:= 0050
+    PRIVATE oBrush1 := TBrush():New( , CLR_LIGHTGRAY ) 
+
+    oPrn:= TMSPrinter():New()
+    oPrn:setPortrait()
+    oPrn:SetPaperSize(9) // A4
+    oPrn:Setup()
+    oPrn:StartPage()
+
+    CabecPxR(oPrn,1) 
+    detailPxR(oPrn,1) 
+
+    Set Filter to
+    oPrn:EndPage()
+    oPrn:Preview()
+    MS_FLUSH()
+
+
+return()   
+
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
+ฑฑบPrograma  ณImpress   บAutor  ณMicrosiga           บ Data ณ  09/10/08   บฑฑ
+ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
+ฑฑบDesc.     ณ     INICIO DA IMPRESSีES                                   บฑฑ
+ฑฑบ          ณ                                                            บฑฑ
+ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
+ฑฑบUso       ณ AP                                                         บฑฑ
+ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+STATIC FUNCTION CabecPxR(oPrn,nOpc) 
+            
+    cBitMap:= "lgrl01.BMP"
+    cBitIso:= ""
+    cBitSel:= "LOGO_TOPFIVE.BMP"   
+
+    
+    oPrn:Say(040,0700,"ALIMENTOS TIA SONIA",oFont7,100) 
+    oPrn:Say(120,0410,"PEDIDOS x ROTAS - MONTAGEM DE CARGA",oFont6,100) 	
+    oPrn:SayBitmap(050,044,cBitMap,200,125 ) //700,300
+    oPrn:Say(040,2000,"Emissใo .: "+ DtoC(Date()),oFont8,100) 
+    oPrn:Say(080,2000,"Hora      .: "+ Time(),oFont8,100)
+    oPrn:Say(120,2000,"Pแgina   .: "+ StrZero(nPag,2),oFont8,100)
+    oPrn:Box(040+0000,0040,185+0000,2370)
+    oPrn:Box(040+0000,0040,185+0000,1990)
+
+
+    oPrn:FillRect( {210,0040,210+050,2380}, oBrush1 ) 
+    oPrn:Say(0215,0040,"CODIGO"	   		,oFont8,100  )
+    oPrn:Say(0215,0200,"DESCRICAO"		,oFont8,100  )
+    oPrn:Say(0215,1000,"NRO.PED"		,oFont8,100  )
+    oPrn:Say(0215,1400,"P.BRUTO"		,oFont8,100  )
+    oPrn:Say(0215,1800,"VLR.TOT"		,oFont8,100  ) 
+
+		
+Return()  
+
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
+ฑฑบPrograma  ณImpress   บAutor  ณMicrosiga           บ Data ณ  09/10/08   บฑฑ
+ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
+ฑฑบDesc.     ณ     INICIO DA IMPRESSีES                                   บฑฑ
+ฑฑบ          ณ                                                            บฑฑ
+ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
+ฑฑบUso       ณ AP                                                         บฑฑ
+ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+STATIC FUNCTION detailPxR(oPrn,nOpc)  
+    local x
+
+    LOCAL nTotNPed := 0
+    local nTotPeso := 0
+    local nTotValo := 0
+    local cFilRot  := "%%" 
+
+    if !EMPTY(MV_PAR01)
+        cFilRot := ""
+        for x:=1 to len(oCgTela:aRotas)
+            cFilRot += "'"+oCgTela:aRotas[x,2]+"',"
+        next x
+        cFilRot :="% AND ZA1_CODROT IN ( " +substr(cFilRot,1,len(cFilRot)-1) + ") %"
+    endif
+
+    BEGINSQL alias "TMP"
+        SELECT  ZA1_CODROT,
+                ZA1_DESCRI, 
+                COUNT(DISTINCT C6_NUM) AS NRO_PED, 
+                SUM(B1_PESBRU*C6_QTDVEN) as Peso_B,
+                SUM(C6_VALOR) AS VLR_TOT
+        
+        FROM SC6320 SC6,
+            SC5320 SC5,
+            SA1320 SA1,
+            SB1320 SB1,
+            ZA1320 ZA1,
+            ZA2320 ZA2
+            
+        WHERE SC6.D_E_L_E_T_ <> '*'
+        
+        AND SC5.D_E_L_E_T_ <> '*'
+        AND C5_NUM = C6_NUM
+        AND C5_FILIAL =C6_FILIAL
+        AND C5_NOTA = ' '
+        AND C5_XCARGA = ' '
+
+
+        AND SA1.D_E_L_E_T_ <> '*'
+        AND A1_COD = C6_CLI
+        AND A1_LOJA = C6_LOJA
+        
+        AND SB1.D_E_L_E_T_ <> '*'
+        AND B1_COD = C6_PRODUTO
+        
+        AND ZA1.D_E_L_E_T_ <> '*'
+        %EXP:cFilRot%
+        AND ZA2_CODROT = ZA1_CODROT
+        AND ZA1_FILIAL = %EXP:XFILIAL("ZA1")%
+        AND ZA2_FILIAL = ZA1_FILIAL
+        
+        
+        AND ZA2.D_E_L_E_T_ <> '*'
+        AND ZA2_CODMUN = A1_COD_MUN
+                AND ZA2_EST = A1_EST
+                AND ZA2_CODBAIR = A1_XCODBAI
+
+
+        AND C5_FILIAL = %EXP:XFILIAL("SC5")%
+
+
+        AND C5_VEND1 NOT IN (  //Desconsidera pedidos de vendedores que possuam rotas cadastradas com tipo 'VENDEDOR'
+                    SELECT ZA1_VEND FROM %TABLE:ZA1% ZA1 
+                    WHERE D_E_L_E_T_ <> '*'   
+                    AND ZA1_TIPO = '3'
+                )
+        AND C5_TRANSP NOT IN (  //Desconsidera pedidos de vendedores que possuam rotas cadastradas com tipo 'VENDEDOR'
+                    SELECT ZA1_TRANS FROM %TABLE:ZA1% ZA1 
+                    WHERE D_E_L_E_T_ <> '*' 
+                    AND ZA1_TIPO = '4'
+                )
+        AND C5_XTPVEND NOT IN ( //Desconsidera pedidos de Patrocionio
+                    SELECT ZA1_XTPVEND FROM %TABLE:ZA1% ZA1 
+                    WHERE D_E_L_E_T_ <> '*' 
+                    AND ZA1_TIPO = '5'
+                ) 
+
+        GROUP BY ZA1_CODROT,
+                ZA1_DESCRI
+                
+        UNION ALL
+        
+        SELECT  '999999' AS ZA1_CODROT,
+                'RATA NAO DEFINIDA' AS ZA1_DESCRI, 
+                COUNT(DISTINCT C6_NUM) AS NRO_PED, 
+                SUM(B1_PESBRU*C6_QTDVEN)as Peso_B,
+                SUM(C6_VALOR) AS VLR_TOT
+        
+        FROM SC6320 SC6,
+            SC5320 SC5,
+            SA1320 SA1,
+            SB1320 SB1
+            
+        WHERE SC6.D_E_L_E_T_ <> '*'
+        
+        AND SC5.D_E_L_E_T_ <> '*'
+        AND C5_NUM = C6_NUM
+        AND C5_FILIAL = C6_FILIAL
+        AND C5_NOTA = ' '
+        AND C5_XCARGA = ' '
+        
+        AND SA1.D_E_L_E_T_ <> '*'
+        AND A1_COD = C6_CLI
+        AND A1_LOJA = C6_LOJA
+        
+        AND SB1.D_E_L_E_T_ <> '*'
+        AND B1_COD = C6_PRODUTO  
+        
+        AND C5_FILIAL = %EXP:XFILIAL("SC5")% 
+            
+        AND A1_EST+A1_COD_MUN+A1_XCODBAI NOT IN (
+            SELECT ZA2_EST+ZA2_CODMUN+ZA2_CODBAIR FROM ZA2320 WHERE D_E_L_E_T_ <> '*')
+
+
+
+        UNION ALL
+        
+        SELECT   ZA1_CODROT,
+                ZA1_DESCRI, 
+                COUNT(DISTINCT C6_NUM) AS NRO_PED, 
+                SUM(B1_PESBRU*C6_QTDVEN)as Peso_B,
+                SUM(C6_VALOR) AS VLR_TOT
+        
+
+        FROM SC6320 SC6,
+            SC5320 SC5,
+            SA1320 SA1,
+            SB1320 SB1,
+            ZA1320 ZA1
+
+        WHERE SC6.D_E_L_E_T_ <> '*'
+        
+        AND SC5.D_E_L_E_T_ <> '*'
+        AND C5_NUM = C6_NUM
+        AND C5_FILIAL = C6_FILIAL
+        AND C5_NOTA = ' '
+        AND C5_XCARGA = ' '
+        
+        AND SA1.D_E_L_E_T_ <> '*'
+        AND A1_COD = C6_CLI
+        AND A1_LOJA = C6_LOJA
+        
+        AND SB1.D_E_L_E_T_ <> '*'
+        AND B1_COD = C6_PRODUTO  
+        %EXP:cFilRot%
+        AND C5_FILIAL = %EXP:XFILIAL("SC5")%
+
+        
+
+            //Pedidos de vendedores que possuam rotas cadastradas com tipo 'VENDEDOR'
+        AND ( ( ZA1_CODROT IN (   
+                    SELECT ZA1_CODROT FROM ZA1320 
+                    WHERE D_E_L_E_T_ <> '*'  
+                    AND ZA1_VEND =  C5_VEND1
+                    AND ZA1_TIPO = '3'
+                ) )
+
+                OR
+            ( ZA1_CODROT IN ( //pedidos de vendedores que possuam rotas cadastradas com tipo 'TRANSPORTADORA'
+                    SELECT ZA1_CODROT FROM ZA1320
+                    WHERE D_E_L_E_T_ <> '*'  
+                    AND ZA1_TRANS =  C5_TRANSP
+                    AND ZA1_TIPO = '4'
+                )) 
+                OR
+            ( ZA1_CODROT IN ( //Patrocionio
+                    SELECT ZA1_CODROT FROM ZA1320
+                    WHERE D_E_L_E_T_ <> '*'  
+                    AND ZA1_XTPVEND =  C5_XTPVEND
+                    AND ZA1_TIPO = '5'
+                ))
+            )
+
+            GROUP BY ZA1_CODROT,
+            ZA1_DESCRI
+        
+    ENDSQL	
+
+    WHILE TMP->(!EOF())	   	
+                
+        oPrn:line(_nLin+210,0040,_nLin+0210,2370) 
+        oPrn:Say(_nLin+0215,0040,TMP->ZA1_CODROT			  						,oFont3,100  )
+        oPrn:Say(_nLin+0215,0200,TMP->ZA1_DESCRI	   								,oFont3,100  )
+        oPrn:Say(_nLin+0215,0900,TRANSFORM(TMP->NRO_PED,"@E 999,999,999")  		,oFont3,100  )
+        oPrn:Say(_nLin+0215,1300,TRANSFORM(TMP->Peso_B,"@E 999,999,999.99")  	,oFont3,100  )
+        oPrn:Say(_nLin+0215,1700,TRANSFORM(TMP->VLR_TOT,"@E 999,999,999.99")	,oFont3,100  )      
+        
+        nTotNPed += TMP->NRO_PED
+        nTotPeso += TMP->Peso_B
+        nTotValo += TMP->VLR_TOT  
+        
+        _nLin += 050 
+        If _nLin > 3000
+            oPrn:Say(_nLin+0300,1200,"* * * * CONTINUA NA PRำXIMA PมGINA * * * *"       ,oFont8,100)
+            _nLin := 0050
+            nPag  := nPag+1
+            oPrn:EndPage()
+            oPrn:StartPage()
+            CabecAber(oPrn,2)//IMPRIME CABECALHO
+        Endif 
+    TMP->(DBSKIP())  
+    ENDDO            
+    TMP->(DBCLOSEAREA())     
+    oPrn:line(_nLin+210,0040,_nLin+0210,2370) 
+    _nLin += 050 
+    oPrn:line(_nLin+210,0040,_nLin+0210,2370)      
+    oPrn:Say(_nLin+0215,0040,"Totais ->" 	   								,oFont8,100  )
+    oPrn:Say(_nLin+0215,0900,TRANSFORM(nTotNPed,"@E 999,999,999")  		,oFont8,100  )
+    oPrn:Say(_nLin+0215,1300,TRANSFORM(nTotPeso,"@E 999,999,999.99")  	,oFont8,100  )
+    oPrn:Say(_nLin+0215,1700,TRANSFORM(nTotValo,"@E 999,999,999.99")	,oFont8,100  )  
+
+RETURN() 

@@ -1,0 +1,1498 @@
+#INCLUDE "Protheus.ch"
+#INCLUDE "fwbrowse.ch"
+
+#DEFINE ENTER CHR(13)+CHR(10)
+#DEFINE COL_LEFT "col_left"
+#define WND_BROWSE  "wnd_browse"
+#define WND_ENCHOICE "wnd_enchoice"
+#define WND_RESULT  "wnd_result"
+
+
+
+/************************************************************************************************************/
+// ROTINA CONSULTA DE EXTRATO BANCARIO	                                                                   /
+/************************************************************************************************************/
+
+
+USER FUNCTION xCgsTela(cAlias,nReg,nOpc)     
+	private cAliasCg 	:= cAlias
+	private nRegCg 		:= nReg
+	private nOpcCg 		:= nOpc
+
+	Regtomemory(cAliasCg,(cvaltochar(nOpcCg)$"3"))
+	if nOpc == 3
+		M->ZA4_CODCARG 	:= u_xCgsProxNum() 
+	else
+		M->ZA4_CODCARG	:= ZA4->ZA4_CODCARG
+	endif
+	private oCgTela 	:= xCgsTela():New()
+	
+
+	oCgTela:init()
+	//oCgTela:refresh()
+	oCgTela:show()
+RETURN()
+
+
+
+class xCgsTela
+
+	PUBLIC Data oDlg As Object
+	PUBLIC Data oLayer As Object
+    PUBLIC Data oPanelEnchoice As Object
+    PUBLIC Data oEnchoice As Object
+    PUBLIC Data oPanelPedidos as Object
+    PUBLIC Data oFolderPedido as Object
+    PUBLIC Data oPedLiberados as Object
+    PUBLIC Data oPedBloqueados as Object
+    PUBLIC Data oPedAbertos as Object
+    PUBLIC Data oMarkOk as Object
+    PUBLIC Data oMarkNo as Object
+    PUBLIC Data oAmarelo as Object     
+    PUBLIC Data oAzul as Object
+    PUBLIC Data oVerde as Object
+    PUBLIC Data oVermelho as Object
+ 
+    PUBLIC Data oPanelRotas as Object
+    PUBLIC Data oRotas      as Object
+
+    PUBLIC Data oPanelOpcoes as Object
+
+    PUBLIC Data oFont1 as Object
+
+    PUBLIC Data oSayT10 
+    PUBLIC Data oSayT81
+    PUBLIC Data oSayT82
+    PUBLIC Data oSayT83
+    PUBLIC Data oSayT84
+    PUBLIC Data oSayT9
+    PUBLIC Data oSayT5
+    PUBLIC Data oSayT6
+    PUBLIC Data oSayT7
+    PUBLIC Data oSayT8
+    PUBLIC Data oSayT12
+
+ 
+    PUBLIC Data aCpoEnchoice
+    PUBLIC Data aAltEnchoice
+    PUBLIC Data aButton
+    PUBLIC Data aButtonRel
+    PUBLIC Data aButtonOpc
+    PUBLIC Data aSize
+    PUBLIC Data aPedLiberados 
+    PUBLIC Data aPedBloqueados
+    PUBLIC Data aPedAbertos 
+    PUBLIC Data aRotas
+ 
+    PUBLIC Data aHeaderPed
+    PUBLIC Data aTamanhPed
+    PUBLIC Data aHeaderRota
+    PUBLIC Data aTamanhRota
+ 
+    PUBLIC Data cRotas
+    PUBLIC Data aPedidos
+    PUBLIC Data nPedidos
+ 
+    PUBLIC Data nTotVolu 
+    PUBLIC Data nTotPBru 
+    PUBLIC Data nTotPLiq  
+    PUBLIC Data nTotGera 
+    PUBLIC Data nTotCuba 
+    PUBLIC Data nPedSele 
+    PUBLIC Data nPedLibe 
+    PUBLIC Data nPedAber   
+    PUBLIC Data nPedBloq 	
+ 
+	PUBLIC Method New() Constructor
+	PUBLIC Method Init()
+	PUBLIC Method Show()
+    PUBLIC Method DefineCpoEnchoice()
+ 
+    PUBLIC Method BuscaPedidos()
+    PUBLIC Method BuscaRotas()
+    PUBLIC Method AtualizGeral()
+    PUBLIC Method refresh()
+ 
+    PUBLIC Method AtuaPedLib() 
+    PUBLIC Method AtuaPedBlo()  
+    PUBLIC Method AtuaPedAbe()
+    PUBLIC Method TotalCarga()	
+
+    PUBLIC Method Gravadados()
+    PUBLIC Method ChkLiberados()
+    PUBLIC Method LibPedAuto()
+    PUBLIC Method AnalisaPedidos()
+    PUBLIC Method LiberaEmpenho()
+    PUBLIC Method OpcoesPedidos()
+
+endclass
+
+
+Method New() Class xCgsTela
+    self:oDlg 	 		:= nil
+	self:oLayer  		:= nil  
+
+    Self:oFont1 		:= TFont():New("Lucida Sans",,018,,.T.,,,,,.F.,.F.)
+
+
+    self:aSize  		:= MsAdvSize()  
+    self:aCpoEnchoice   := {}
+    self:aAltEnchoice   := {}
+
+    Self:cRotas         := ""
+    Self:aPedidos       := {}   
+    Self:nPedidos       := 0
+
+    Self:nTotVolu       := 0
+    Self:nTotPBru       := 0
+    Self:nTotPLiq       := 0 
+    Self:nTotGera       := 0
+    Self:nTotCuba       := 0
+    Self:nPedSele       := 0
+    Self:nPedLibe       := 0
+    Self:nPedAber       := 0  
+    Self:nPedBloq       := 0	
+
+
+    self:aPedLiberados  := { {.T.,.T.," "," "," "," "," "," "," "," ",0,0,0,0,0,"","",""} }
+    self:aPedBloqueados := { {"C",.T.," "," "," "," "," "," "," "," ",0,0,0,0,0,"","",""} }
+    self:aPedAbertos    := { {.T.,.T.," "," "," "," "," "," "," "," ",0,0,0,0,0,"","",""} }
+
+    self:aRotas         := { { .f. ,"GENERI","SEM ROTA DEFINIDA",0,0,"",""} }
+
+    self:aHeaderPed     := {" " ,"S.E"  ,"Pedido"   ,"N.Omie","Emissao" ,"Entrega"  ,"Cliente"  ,"Nome" ,"Estado","Cidade"  ,"Bairro","Transportadora","Armazem","Volume","Cubagem" ,"Peso Li","Peso Br","Valor"}
+    self:aTamanhPed     := {10  ,10     ,30         ,30      ,30        ,30         ,100        ,10     ,50      ,50        ,30      ,30              ,30       ,30      ,30        ,30       ,30       ,30}
+
+    self:aHeaderRota    := {" ","Codigo","Descricao","Peso Minimo","Valor Minimo"}
+    self:aTamanhRota    := {10 ,30      ,50         ,20           ,20}
+
+	self:oMarkOk   		:= LoadBitmap(GetResources(), "CHECKED") 
+	self:oMarkNo   		:= LoadBitmap(GetResources(), "UNCHECKED") 
+
+    self:oAmarelo       := LoadBitmap(GetResources(), "BR_AMARELO") 
+    self:oAzul 	        := LoadBitmap(GetResources(), "BR_AZUL")  
+    self:oVerde         := LoadBitmap(GetResources(), "BR_VERDE")
+    self:oVermelho      := LoadBitmap(GetResources(), "BR_VERMELHO")     
+return
+
+
+Method Init() Class xCgsTela
+    Local lCloseButt 	:= .f.//!(oAPP:lMdi)
+	Local lVirtual		:= .f.
+	local lTransparent	:= .f.
+
+    Self:DefineCpoEnchoice()
+    Self:BuscaRotas()
+
+    If FlatMode()
+		nTop := 40
+		nLeft := 30 
+		nBottom := oMainWnd:nBottom + 10
+		nRight := oMainWnd:nRight + 20
+	Else
+		nTop := oMainWnd:nTop + 125
+		nLeft := oMainWnd:nLeft + 5
+		nBottom := oMainWnd:nBottom - 60
+		nRight := oMainWnd:nRight - 13
+	EndIf
+	    
+
+    Self:oDlg := TDialog():New(nTop, nLeft,nBottom, nRight,"Cargas",,,,/*nOr(WS_VISIBLE,WS_POPUP)*/,CLR_BLACK,CLR_WHITE,,,.T.,,,,,,lTransparent)
+
+    //Inicializa o FWLayer com a janela que ele pertencera e se sera exibido o botão de fechar
+    Self:oLayer := FWLayer():New()
+    Self:oLayer:init(Self:oDlg, lCloseButt)
+    
+    //Cria as colunas do Layer
+    Self:oLayer:addCollumn('Col01',70,.F.)
+    Self:oLayer:addCollumn('Col02',29,.F.)
+
+
+    //Adiciona Janelas as colunas
+    Self:oLayer:addWindow('Col01','C1_Win01','Dados'             ,25,.T.,.F.,{|| Alert("Clique janela 01!") },,{|| Alert("Janela 01 recebeu foco!") })
+    Self:oLayer:addWindow('Col01','C1_Win02','Seleção de pedidos',70,.T.,.T.,{|| Alert("Clique janela 02!") },,{|| Alert("Janela 02 recebeu foco!") })
+    
+    Self:oLayer:addWindow('Col02','C2_Win01','Rotas'             ,55,.T.,.F.,{|| Alert("Clique janela 01 Coluna 2!") },,{|| Alert("Janela 01 recebeu foco Coluna 2!") })
+    Self:oLayer:addWindow('Col02','C2_Win02','Opções'            ,40,.T.,.F.,{|| Alert("Clique janela 01 Coluna 2!") },,{|| Alert("Janela 01 recebeu foco Coluna 2!") })
+    
+
+    //Coloca o botão de split na coluna
+    //Self:oLayer:setColSplit('Col02',CONTROL_ALIGN_RIGHT,,{|| })
+
+
+    // ******************************   PAINEL DE ENCHOICE DADOS ********************************************************
+
+    Self:oPanelEnchoice := TScrollBox():New(Self:oLayer:GetWinPanel('Col01', 'C1_Win01'),00,00, Self:aSize[6]*( 0.517 - ( 91/Self:aSize[6])) , Self:aSize[5]* 0.496,.T.,.F.,.F.)
+    Self:oPanelEnchoice:Align := CONTROL_ALIGN_ALLCLIENT	    
+    Self:oEnchoice := Msmget():New(cAliasCg,nRegCg,nOpcCg,,,,Self:aCpoEnchoice,{00,00,nBottom/5,(nRight*0.35)},Self:aAltEnchoice,3,,,,Self:oPanelEnchoice,,lVirtual,,,,,,,,.T.)     
+    
+
+	// ******************************   PAINEL DE BROWSER ********************************************************
+	Self:oPanelPedidos := TPanel():New(0, 0, "", ;
+	                           Self:oLayer:GetWinPanel('Col01','C1_Win02' ), ;
+	                                  Nil, .T., .T., Nil, Nil, 20, 20)
+	Self:oPanelPedidos:Align := CONTROL_ALIGN_ALLCLIENT
+
+    //FOLDErS    
+    @ 000, 000 FOLDER Self:oFolderPedido SIZE Self:aSize[5]* 0.345, Self:aSize[6] * 0.295 OF Self:oPanelPedidos ITEMS "Pedidos Liberados","Pedidos Bloqueados","Pedidos Abertos" COLORS 0, 16777215 PIXEL
+
+    //Pedidos Liberados
+    Self:oPedLiberados := TCBrowse():New( 000 , 000, Self:aSize[5]* 0.344, Self:aSize[6] * 0.295,, self:aHeaderPed,self:aTamanhPed, self:oFolderPedido:aDialogs[1],,,,,{||  Self:ChkLiberados(self:oPedLiberados:nAt)   },,,,,,,.F.,,.T.,,.F.,,, )
+	Self:oPedLiberados:lHScroll := .T. // NoScroll
+	Self:oPedLiberados:SetArray(self:self:aPedLiberados)
+	Self:oPedLiberados:bLine := {|| {    iif(self:aPedLiberados[Self:oPedLiberados:nAt,1],Self:oMarkOk,Self:oMarkNo),;
+                                        iif(self:aPedLiberados[Self:oPedLiberados:nAt,2],Self:oVerde,Self:oVermelho),;
+                                        self:aPedLiberados[Self:oPedLiberados:nAt,3],;
+                                        self:aPedLiberados[Self:oPedLiberados:nAt,17],;  
+                                        self:aPedLiberados[Self:oPedLiberados:nAt,18],; 
+                                        self:aPedLiberados[Self:oPedLiberados:nAt,4],;
+                                        self:aPedLiberados[Self:oPedLiberados:nAt,5],;
+                                        self:aPedLiberados[Self:oPedLiberados:nAt,6],;
+                                        self:aPedLiberados[Self:oPedLiberados:nAt,7],;
+                                        self:aPedLiberados[Self:oPedLiberados:nAt,8],;
+                                        self:aPedLiberados[Self:oPedLiberados:nAt,9],;
+                                        self:aPedLiberados[Self:oPedLiberados:nAt,10],; 
+                                        self:aPedLiberados[Self:oPedLiberados:nAt,16],;
+                                        self:aPedLiberados[Self:oPedLiberados:nAt,11],;
+                                        self:aPedLiberados[Self:oPedLiberados:nAt,12],;
+                                        self:aPedLiberados[Self:oPedLiberados:nAt,13],;
+                                        self:aPedLiberados[Self:oPedLiberados:nAt,14],;
+                                        self:aPedLiberados[Self:oPedLiberados:nAt,15]; 
+                                        }} 
+
+
+    //Pedidos Bloqueados
+    Self:oPedBloqueados := TCBrowse():New( 000 , 000, Self:aSize[5]* 0.344, Self:aSize[6] * 0.295,, self:aHeaderPed,self:aTamanhPed, self:oFolderPedido:aDialogs[2],,,,,{||  Self:DelCarga(self:oBrowse:nAt)   },,,,,,,.F.,,.T.,,.F.,,, )
+	Self:oPedBloqueados:lHScroll := .T. // NoScroll
+	Self:oPedBloqueados:SetArray(self:self:aPedBloqueados)
+	Self:oPedBloqueados:bLine := {|| {    iif(self:aPedBloqueados[Self:oPedBloqueados:nAt,1]=="C",Self:oAzul,Self:oAmarelo),;
+                                        iif(self:aPedBloqueados[Self:oPedBloqueados:nAt,2],Self:oVerde,Self:oVermelho),;
+                                        self:aPedBloqueados[Self:oPedBloqueados:nAt,3],;
+                                        self:aPedBloqueados[Self:oPedBloqueados:nAt,17],;  
+                                        self:aPedBloqueados[Self:oPedBloqueados:nAt,18],; 
+                                        self:aPedBloqueados[Self:oPedBloqueados:nAt,4],;
+                                        self:aPedBloqueados[Self:oPedBloqueados:nAt,5],;
+                                        self:aPedBloqueados[Self:oPedBloqueados:nAt,6],;
+                                        self:aPedBloqueados[Self:oPedBloqueados:nAt,7],;
+                                        self:aPedBloqueados[Self:oPedBloqueados:nAt,8],;
+                                        self:aPedBloqueados[Self:oPedBloqueados:nAt,9],;
+                                        self:aPedBloqueados[Self:oPedBloqueados:nAt,10],; 
+                                        self:aPedBloqueados[Self:oPedBloqueados:nAt,16],;
+                                        self:aPedBloqueados[Self:oPedBloqueados:nAt,11],;
+                                        self:aPedBloqueados[Self:oPedBloqueados:nAt,12],;
+                                        self:aPedBloqueados[Self:oPedBloqueados:nAt,13],;
+                                        self:aPedBloqueados[Self:oPedBloqueados:nAt,14],;
+                                        self:aPedBloqueados[Self:oPedBloqueados:nAt,15]; 
+                                        }} 
+
+
+    //Pedidos Abertos
+    Self:oPedAbertos := TCBrowse():New( 000 , 000, Self:aSize[5]* 0.344, Self:aSize[6] * 0.295,, self:aHeaderPed,self:aTamanhPed, self:oFolderPedido:aDialogs[3],,,,,{||  Self:DelCarga(self:oBrowse:nAt)   },,,,,,,.F.,,.T.,,.F.,,, )
+	Self:oPedAbertos:lHScroll := .T. // NoScroll
+	Self:oPedAbertos:SetArray(self:self:aPedAbertos)
+	Self:oPedAbertos:bLine := {||   {  iif(self:aPedAbertos[Self:oPedAbertos:nAt,1],Self:oVerde,Self:oVermelho),;
+                                        iif(self:aPedAbertos[Self:oPedAbertos:nAt,2],Self:oVerde,Self:oVermelho),;
+                                        self:aPedAbertos[Self:oPedAbertos:nAt,3],;
+                                        self:aPedAbertos[Self:oPedAbertos:nAt,17],;  
+                                        self:aPedAbertos[Self:oPedAbertos:nAt,18],; 
+                                        self:aPedAbertos[Self:oPedAbertos:nAt,4],;
+                                        self:aPedAbertos[Self:oPedAbertos:nAt,5],;
+                                        self:aPedAbertos[Self:oPedAbertos:nAt,6],;
+                                        self:aPedAbertos[Self:oPedAbertos:nAt,7],;
+                                        self:aPedAbertos[Self:oPedAbertos:nAt,8],;
+                                        self:aPedAbertos[Self:oPedAbertos:nAt,9],;
+                                        self:aPedAbertos[Self:oPedAbertos:nAt,10],; 
+                                        self:aPedAbertos[Self:oPedAbertos:nAt,16],;
+                                        self:aPedAbertos[Self:oPedAbertos:nAt,11],;
+                                        self:aPedAbertos[Self:oPedAbertos:nAt,12],;
+                                        self:aPedAbertos[Self:oPedAbertos:nAt,13],;
+                                        self:aPedAbertos[Self:oPedAbertos:nAt,14],;
+                                        self:aPedAbertos[Self:oPedAbertos:nAt,15]; 
+                                        }} 
+
+
+    
+//totais   
+    nAlturaT := Self:aSize[6] * 0.295
+    nLargurT := Self:aSize[5] * 0.305
+
+	@ nAlturaT, 000 GROUP oGroup6 TO Self:aSize[6] * 0.336, nLargurT PROMPT "Totais" OF Self:oPanelPedidos COLOR 0, 16777215 PIXEL  
+	
+	@ nAlturaT + 10, (nLargurT-nLargurT) + 10 SAY oSayT2 PROMPT "Peso Liquido" 	SIZE 060, 010 OF Self:oPanelPedidos FONT Self:oFont1 COLORS 16711680, 16777215 PIXEL
+    @ nAlturaT + 23, (nLargurT-nLargurT) + 10 SAY oSayT3 PROMPT "Peso Bruto"	SIZE 060, 010 OF Self:oPanelPedidos FONT Self:oFont1 COLORS 16711680, 16777215 PIXEL   
+    @ nAlturaT + 10, (nLargurT-nLargurT) + 60 SAY oSayT2 PROMPT "->" 			SIZE 020, 010 OF Self:oPanelPedidos FONT Self:oFont1 COLORS 16711680, 16777215 PIXEL
+    @ nAlturaT + 23, (nLargurT-nLargurT) + 60 SAY oSayT3 PROMPT "->"  			SIZE 020, 010 OF Self:oPanelPedidos FONT Self:oFont1 COLORS 16711680, 16777215 PIXEL    
+    
+    @ nAlturaT + 10, (nLargurT-nLargurT) + 70 SAY Self:oSayT6 PROMPT TRANSFORM(Self:nTotPLiq,"@E 999,999,999") SIZE 066, 011 OF Self:oPanelPedidos FONT Self:oFont1 COLORS 16711680, 16777215 PIXEL
+    @ nAlturaT + 23, (nLargurT-nLargurT) + 70 SAY Self:oSayT7 PROMPT TRANSFORM(Self:nTotPBru,"@E 999,999,999") SIZE 066, 011 OF Self:oPanelPedidos FONT Self:oFont1 COLORS 16711680, 16777215 PIXEL
+	
+	@ nAlturaT + 10, ( nLargurT*0.37 ) + 00 SAY oSayT1 PROMPT "Volume" 		SIZE 060, 010 OF Self:oPanelPedidos FONT oFont1 COLORS 16711680, 16777215 PIXEL
+    @ nAlturaT + 23, ( nLargurT*0.37 ) + 00 SAY oSayT4 PROMPT "Cubagem"		SIZE 060, 010 OF Self:oPanelPedidos FONT oFont1 COLORS 16711680, 16777215 PIXEL
+    @ nAlturaT + 10, ( nLargurT*0.37 ) + 50 SAY oSayT2 PROMPT "->"  			SIZE 020, 010 OF Self:oPanelPedidos FONT oFont1 COLORS 16711680, 16777215 PIXEL
+    @ nAlturaT + 23, ( nLargurT*0.37 ) + 50 SAY oSayT3 PROMPT "->"  			SIZE 020, 010 OF Self:oPanelPedidos FONT oFont1 COLORS 16711680, 16777215 PIXEL   
+    @ nAlturaT + 10, ( nLargurT*0.37 ) + 60 SAY Self:oSayT5 PROMPT TRANSFORM(Self:nTotVolu,"@E 999,999,999") SIZE 066, 011 OF Self:oPanelPedidos FONT Self:oFont1 COLORS 16711680, 16777215 PIXEL
+    @ nAlturaT + 23, ( nLargurT*0.37 ) + 60 SAY Self:oSayT8 PROMPT TRANSFORM(Self:nTotCuba,"@E 9,999,999.99") SIZE 066, 011 OF Self:oPanelPedidos FONT Self:oFont1 COLORS 16711680, 16777215 PIXEL  
+    
+    
+    @ nAlturaT + 10, ( nLargurT*0.75 ) + 00 SAY oSayT4 PROMPT "Total $"		SIZE 060, 010 OF Self:oPanelPedidos FONT Self:oFont1 COLORS 16711680, 16777215 PIXEL   
+    @ nAlturaT + 23, ( nLargurT*0.75 ) + 00 SAY oSayT4 PROMPT "Nº Ped.Sel"		SIZE 060, 010 OF Self:oPanelPedidos FONT Self:oFont1 COLORS 16711680, 16777215 PIXEL
+    @ nAlturaT + 10, ( nLargurT*0.75 ) + 50 SAY oSayT3 PROMPT "->"  			SIZE 020, 010 OF Self:oPanelPedidos FONT Self:oFont1 COLORS 16711680, 16777215 PIXEL      
+    @ nAlturaT + 23, ( nLargurT*0.75 ) + 50 SAY oSayT3 PROMPT "->"  			SIZE 020, 010 OF Self:oPanelPedidos FONT Self:oFont1 COLORS 16711680, 16777215 PIXEL 
+    @ nAlturaT + 10, ( nLargurT*0.75 ) + 60 SAY Self:oSayT12 PROMPT TRANSFORM(Self:nTotGera,"@E 999,999,999.99") SIZE 066, 011 OF Self:oPanelPedidos FONT Self:oFont1 COLORS 255, 16777215 PIXEL
+    @ nAlturaT + 23, ( nLargurT*0.75 ) + 60 SAY Self:oSayT84 PROMPT TRANSFORM(Self:nPedSele,"@E 999,999,999") SIZE 066, 011 OF Self:oPanelPedidos FONT Self:oFont1 COLORS 16711680, 16777215 PIXEL        
+    
+
+//numero de pedidso   
+
+	@ Self:aSize[6] * 0.295, Self:aSize[5]* 0.305 GROUP oGroup6 TO Self:aSize[6] * 0.336, Self:aSize[5]* 0.345 PROMPT "Nº Pedidos" OF Self:oPanelPedidos COLOR 0, 16777215 PIXEL  
+	
+    @ nAlturaT + 08, (Self:aSize[5]* 0.305) + 04  SAY oSayT9  PROMPT "Liberados"		SIZE 060, 010 OF Self:oPanelPedidos PIXEL
+    @ nAlturaT + 14, (Self:aSize[5]* 0.305) + 04  SAY oSayT9  PROMPT "Bloqueados"		SIZE 060, 010 OF Self:oPanelPedidos PIXEL
+    @ nAlturaT + 20, (Self:aSize[5]* 0.305) + 04  SAY oSayT9  PROMPT "Abertos"		SIZE 060, 010 OF Self:oPanelPedidos PIXEL
+    @ nAlturaT + 26, (Self:aSize[5]* 0.305) + 04  SAY oSayT9  PROMPT "Total"		SIZE 060, 010 OF Self:oPanelPedidos PIXEL
+    
+    @ nAlturaT + 08, (Self:aSize[5]* 0.305) + 30  SAY Self:oSayT10 PROMPT TRANSFORM(Self:nPedLibe,"@E 999,999,999") SIZE 066, 011 OF Self:oPanelPedidos PIXEL  
+    @ nAlturaT + 14, (Self:aSize[5]* 0.305) + 30  SAY Self:oSayT81 PROMPT TRANSFORM(Self:nPedBloq,"@E 999,999,999") SIZE 066, 011 OF Self:oPanelPedidos PIXEL 
+    @ nAlturaT + 20, (Self:aSize[5]* 0.305) + 30  SAY Self:oSayT82 PROMPT TRANSFORM(Self:nPedAber,"@E 999,999,999") SIZE 066, 011 OF Self:oPanelPedidos PIXEL 
+    @ nAlturaT + 26, (Self:aSize[5]* 0.305) + 30  SAY Self:oSayT83 PROMPT TRANSFORM(Self:nPedidos,"@E 999,999,999") SIZE 066, 011 OF Self:oPanelPedidos PIXEL      
+    
+
+
+
+	// ******************************   PAINEL DE Rotas ********************************************************
+	Self:oPanelRotas := TPanel():New(0, 0, "", ;
+	                           Self:oLayer:GetWinPanel('Col02','C2_Win01' ), ;
+	                                  Nil, .T., .T., Nil, Nil, 20, 20)
+	Self:oPanelRotas:Align := CONTROL_ALIGN_ALLCLIENT
+
+    //Rotas
+    Self:oRotas := TCBrowse():New( 000 , 000, Self:aSize[5]* 0.138, Self:aSize[6] * 0.256,, self:aHeaderRota,self:aTamanhRota, Self:oPanelRotas ,,,,,{|| processa( {|| self:AtualizGeral(Self:oRotas:nAt,nOpcCg)},"Buscando Pedidos...","Buscando..."  )  },,,,,,,.F.,,.T.,,.F.,,, )
+	Self:oRotas:lHScroll := .T. // NoScroll
+	Self:oRotas:SetArray(self:aRotas)
+    Self:oRotas:bLine := {||   {    iif(self:aRotas[Self:oRotas:nAt,1],oMarkOk,oMarkNo),;
+                                    self:aRotas[Self:oRotas:nAt,2],;
+                                    self:aRotas[Self:oRotas:nAt,3],;
+                                    self:aRotas[Self:oRotas:nAt,4],;
+                                    self:aRotas[Self:oRotas:nAt,5];
+                                    }} 
+
+
+	// ******************************   PAINEL DE OPCOES ********************************************************
+	Self:oPanelOpcoes := TPanel():New(0, 0, "", ;
+	                           Self:oLayer:GetWinPanel('Col02','C2_Win02' ), ;
+	                                  Nil, .T., .T., Nil, Nil, 20, 20)
+	Self:oPanelOpcoes:Align := CONTROL_ALIGN_ALLCLIENT
+
+
+
+    nTamBut     := (Self:aSize[5]*0.13)	
+
+    nPosBut	    := 0 //(Self:aSize[6]*0.5) - (9 *19)
+		
+	oTButton1 	:= TButton():New( (9*00), 05, "Rel.Bloqueados"			,Self:oPanelOpcoes ,{||u_xCgsRBloqueados() }		, nTamBut,9,,,.F.,.T.,.F.,,.F.,,,.F. )
+	oTButton1 	:= TButton():New( (9*01), 05, "Rel.Ped.Selecionados"	,Self:oPanelOpcoes ,{||u_xCgsRSelecionados()}		, nTamBut,9,,,.F.,.T.,.F.,,.F.,,,.F. )
+	oTButton1 	:= TButton():New( (9*02), 05, "Rel.Pedidos x Rotas"	    ,Self:oPanelOpcoes ,{||u_xCgsRPedXRota()}		, nTamBut,9,,,.F.,.T.,.F.,,.F.,,,.F. )
+	oTButton1 	:= TButton():New( (9*03), 05, "Rel.Cortes"	            ,Self:oPanelOpcoes ,{||u_xCgsRCortes()}		, nTamBut,9,,,.F.,.T.,.F.,,.F.,,,.F. )
+	oTButton1 	:= TButton():New( (9*04), 05, "Rel.Pre-Nota"	        ,Self:oPanelOpcoes ,{||u_xCgsRPrenota()}	, nTamBut,9,,,.F.,.T.,.F.,,.F.,,,.F. )
+	oTButton1 	:= TButton():New( (9*05), 05, "Saldos"	                ,Self:oPanelOpcoes ,{||u_xGgsCSaldo()}		, nTamBut,9,,,.F.,.T.,.F.,,.F.,,,.F. )
+    oTButton1 	:= TButton():New( (9*06), 05, "Rota do Pedido"	        ,Self:oPanelOpcoes ,{||RetRotPed()}	, nTamBut,9,,,.F.,.T.,.F.,,.F.,,,.F. )
+	oTButton1 	:= TButton():New( (9*07), 05, "Alterar Armazens"        ,Self:oPanelOpcoes ,{||AlterArm()}		, nTamBut,9,,,.F.,.T.,.F.,,.F.,,,.F. )
+	oTButton1 	:= TButton():New( (9*08), 05, "Liberação Pedidos"	    ,Self:oPanelOpcoes ,{||Self:LibPedAuto()}		, nTamBut,9,,,.F.,.T.,.F.,,.F.,,,.F. )
+	oTButton1 	:= TButton():New( (9*09), 05, "Analisa Bloqueados"	,Self:oPanelOpcoes ,{|| processa({||Self:AnalisaPedidos()})}		, nTamBut,9,,,.F.,.T.,.F.,,.F.,,,.F. )
+	oTButton1 	:= TButton():New( (9*10), 05, "Liberação Empenhos"		,Self:oPanelOpcoes ,{||Self:LiberaEmpenho()}		, nTamBut,9,,,.F.,.T.,.F.,,.F.,,,.F. )
+	oTButton1 	:= TButton():New( (9*11), 05, "Corte Estoque"		    ,Self:oPanelOpcoes ,{||Corte()}		, nTamBut,9,,,.F.,.T.,.F.,,.F.,,,.F. )
+	oTButton1 	:= TButton():New( (9*12), 05, "Opções do Pedido"		,Self:oPanelOpcoes ,{||Self:OpcoesPedidos(self:oFolder1:nOption)}	, nTamBut,9,,,.F.,.T.,.F.,,.F.,,,.F. )
+	oTButton1 	:= TButton():New( (9*13), 05, "Desmonte"			    ,Self:oPanelOpcoes ,{||xCgDesmont()}		, nTamBut,9,,,.F.,.T.,.F.,,.F.,,,.F. )
+	
+    
+    oTButton1 	:= TButton():New( (9*15), 05, "Sair"	                ,Self:oPanelOpcoes ,{||oCgTela:oDlg:end()}	, (nTamBut/2) ,18,,,.F.,.T.,.F.,,.F.,,,.F. )
+    oTButton1 	:= TButton():New( (9*15), nTamBut/2 + 05, "Confirma"	,Self:oPanelOpcoes ,{||Self:Gravadados()}	, (nTamBut/2) ,18,,,.F.,.T.,.F.,,.F.,,,.F. )							
+	
+
+return
+
+//---------------------------------------------------------------------------- */
+Method Show() Class xCgsTela
+	ACTIVATE MSDIALOG oCgTela:oDlg CENTERED 
+Return 
+
+//---------------------------------------------------------------------------- */
+Method DefineCpoEnchoice() Class xCgsTela
+	Self:aCpoEnchoice := {}
+	Self:aAltEnchoice := {}
+
+	dbselectarea("SX3")
+	dbsetorder(1)
+	dbseek(cAliasCg)
+	while ! eof() .and. x3_arquivo == cAliasCg
+		if x3uso(x3_usado) .and. cnivel >= x3_nivel
+			aAdd(Self:aCpoEnchoice,x3_campo)
+			aAdd(Self:aAltEnchoice,x3_campo)
+		endif
+		dbskip()
+	enddo
+Return
+
+//---------------------------------------------------------------------------- */
+Method BuscaRotas() Class xCgsTela
+    local cQuery
+    local cTabela := GetnextAlias()
+    Self:aRotas   := {}
+
+    Pergunte("xCargas",.F.)
+
+    cQuery := " select ZA1_CODROT,
+    cQuery += " 	   ZA1_DESCRI,
+    cQuery += " 	   ZA1_PESOMIN,
+    cQuery += " 	   ZA1_VLRMIN
+    cQuery += " from "+RETSQLNAME("ZA1")+" ZA1 "
+    cQuery += " where ZA1.D_E_L_E_T_ <> '*' "
+    cQuery += " and ZA1_FILIAL = '"+XFILIAL("ZA1")+"'"
+
+    if ! EMPTY(MV_PAR01)
+        cQuery += " and ZA1_AGRUP = '"+MV_PAR01+"'"
+    ENDIF
+
+    if  MV_PAR02 == 1
+        cQuery += " ORDER BY ZA1_CODROT  "
+    else
+        cQuery += " ORDER BY ZA1_DESCRI  "
+    endif
+    cQuery := ChangeQuery(cQuery)
+    dbUseArea(.T.,"TOPCONN",TcGenQry(,,cQuery),cTabela,.T.,.T.)  
+
+    WHILE (cTabela)->(!EOF())
+        aadd(Self:aRotas,{ IIF((cTabela)->ZA1_CODROT $ Self:cRotas , .T. , .F.),;
+                            (cTabela)->ZA1_CODROT,;
+                            (cTabela)->ZA1_DESCRI,;
+                            (cTabela)->ZA1_PESOMIN,;
+                            (cTabela)->ZA1_VLRMIN;
+                            } )  
+        (cTabela)->(dbskip())
+    enddo
+    (cTabela)->(dbclosearea())  
+
+    aadd(Self:aRotas,{ IIF("GENERI" $ Self:cRotas , .T. , .F.),;
+                    "GENERI","SEM ROTA DEFINIDA",0,0,"",""}) 	
+Return
+
+
+
+//---------------------------------------------------------------------------- */
+Method AtualizGeral(nPos,nOpcCg) Class xCgsTela
+     
+    if nOpcCg == 2
+        return()
+    endif   
+
+    if !empty(nPos)
+        Self:aRotas[nPos,1] := !Self:aRotas[nPos,1]
+        
+        //atualiza grids do folder 
+        if !Self:BuscaPedidos()
+            Self:aRotas[nPos,1] := .F.
+        endif     
+    else          
+        Self:BuscaPedidos()
+    endif
+
+    Self:refresh()
+
+return
+
+//---------------------------------------------------------------------------- */
+Method BuscaPedidos() Class xCgsTela
+    local x
+    local lRet := .T.
+    LOCAL lVirgula := .F.     
+    LOCAL lGeneric := .F.
+    Self:aPedidos := {}   
+    Self:nPedidos := 0
+
+    cQuery := " select  C5_NUM,      "
+    cQuery += " 		C5_CLIENTE,  "
+    cQuery += " 		C5_LOJACLI,  "
+    cQuery += " 		A1_NOME,     "
+    cQuery += " 		A1_EST,      "
+    cQuery += " 		A1_COD_MUN,  "
+    cQuery += " 		A1_MUN,      "
+    cQuery += " 		C5_VOLUME1,  "
+    cQuery += " 		C5_VEND1,    "
+    cQuery += " 		C5_LIBEROK,  "
+    cQuery += " 		C5_FECENT,	 " 
+    cQuery += " 		C5_EMISSAO,	 " 
+    cQuery += " 		A1_XBAIRRO,	 " 
+    cQuery += " 		C5_TRANSP,	 " 
+    cQuery += " 		C5_XNFOMIE	 "
+    cQuery += " from "+RETSQLNAME("SC5")+" SC5 "
+    cQuery += " INNER JOIN "+RETSQLNAME("SA1")+" SA1 ON A1_COD = C5_CLIENTE AND A1_LOJA = C5_LOJACLI AND SA1.D_E_L_E_T_ <> '*'  "
+    cQuery += " WHERE SC5.D_E_L_E_T_ <>'*' "
+    cQuery += " and C5_FILIAL = '"+xfilial("SC5")+"' " 
+
+    IF nOpcCg == 2
+        cQuery += " and C5_XCARGA = '"+ZA4->ZA4_CODCARG+"' " 
+    else 
+        cQuery += " AND C5_NOTA = ' ' "
+        cQuery += " and C5_XCARGA = ' ' "
+        Self:cRotas := ""
+        FOR x:=1 TO LEN(Self:aRotas)
+            IF Self:aRotas[x,1]
+                if Self:aRotas[x,2] == "GENERI"
+                    lGeneric  := .T.
+                endif
+                
+                Self:cRotas   += iif(lVirgula,",","")+ "'"+ Self:aRotas[x,2] +"'" 
+                lVirgula := .T. 
+            ENDIF 
+        NEXT x    
+        cQuery += " AND ( " +;
+            " ( "+iif(lGeneric,"(","")+"A1_EST+A1_COD_MUN+A1_XCODBAI IN ( " +;
+                " select ZA2_EST+ZA2_CODMUN+ZA2_CODBAIR from "+RETSQLNAME("ZA2")+" ZA2 " +;
+                " INNER JOIN "+RETSQLNAME("ZA1")+" ZA1 " +;
+                " ON ZA1_CODROT = ZA2_CODROT  " +; 
+                " AND ZA1_FILIAL = ZA2_FILIAL  " +;
+                " AND ZA1_TIPO = '2' " +;
+                " WHERE ZA2.D_E_L_E_T_ <> '*'   " +;
+                " AND C5_VEND1 NOT IN ( " +; //Desconsidera pedidos de vendedores que possuam rotas cadastradas com tipo 'VENDEDOR'
+                    " SELECT ZA1_VEND FROM "+RETSQLNAME("ZA1")+" ZA1 " +;
+                    " WHERE D_E_L_E_T_ <> '*'   " +;
+                    " AND ZA1_TIPO = '3'" +;
+                " ) " +;
+                " AND C5_TRANSP NOT IN ( " +; //Desconsidera pedidos de vendedores que possuam rotas cadastradas com tipo 'VENDEDOR'
+                    " SELECT ZA1_TRANS FROM "+RETSQLNAME("ZA1")+" ZA1 " +;
+                    " WHERE D_E_L_E_T_ <> '*'   " +;
+                    " AND ZA1_TIPO = '4'" +;
+                " ) " +;
+                " AND C5_XTPVEND NOT IN ( " +; //Desconsidera pedidos de Patrocionio
+                    " SELECT ZA1_XTPVEND FROM "+RETSQLNAME("ZA1")+" ZA1 " +;
+                    " WHERE D_E_L_E_T_ <> '*'   " +;
+                    " AND ZA1_TIPO = '5'" +;
+                " ) " +;
+                " AND ZA2_CODROT IN ( " + Self:cRotas  + " ) " +;
+            " ) " 	
+        if !lVirgula 
+            Self:AtuaPedLib() 
+            Self:AtuaPedBlo()  
+            Self:AtuaPedAbe()
+            Self:TotalCarga()	
+            return()
+        endif
+        
+        if lGeneric 
+            cQuery += " or (A1_EST+A1_COD_MUN+A1_XCODBAI not IN ( "
+            cQuery += " select ZA2_EST+ZA2_CODMUN+ZA2_CODBAIR from "+RETSQLNAME("ZA2")+" ZA2 "
+            cQuery += " INNER JOIN "+RETSQLNAME("ZA1")+" ZA1 "
+            cQuery += " ON ZA1_CODROT = ZA2_CODROT  "
+            cQuery += " AND ZA1_FILIAL = ZA2_FILIAL  "
+            cQuery += " AND ZA1_TIPO = '2' "
+            cQuery += " WHERE ZA2.D_E_L_E_T_ <> '*' ) ) AND (  "
+            cquery += " C5_VEND1 NOT IN (SELECT ZA1_VEND FROM "+RETSQLNAME("ZA1")+" ZA1 "
+            cQuery += " WHERE ZA1.D_E_L_E_T_ <> '*'   "  
+            cQuery += " AND ZA1_TIPO = '3' ))"
+            cQuery += " ) "
+        endif
+        
+        cQuery += ") OR ( " 
+        cQuery += " C5_VEND1 IN (SELECT ZA1_VEND FROM "+RETSQLNAME("ZA1")+" ZA1 
+        cQuery += " WHERE ZA1_CODROT IN ( "+ Self:cRotas +" ) "
+        cQuery += " AND ZA1.D_E_L_E_T_ <> '*'   "  
+        cQuery += " AND ZA1_TIPO = '3'"
+        cQuery += " ) )" 
+        
+        cQuery += " OR ( " 
+        cQuery += " C5_TRANSP IN (SELECT ZA1_TRANS FROM "+RETSQLNAME("ZA1")+" ZA1 
+        cQuery += " WHERE ZA1_CODROT IN ( "+ Self:cRotas +" ) "
+        cQuery += " AND ZA1.D_E_L_E_T_ <> '*'   "  
+        cQuery += " AND ZA1_TIPO = '4'"
+        cQuery += " ) )"	
+
+        cQuery += " OR ( " 
+        cQuery += " C5_XTPVEND IN (SELECT ZA1_XTPVEND FROM "+RETSQLNAME("ZA1")+" ZA1 
+        cQuery += " WHERE ZA1_CODROT IN ( "+ Self:cRotas +" ) "
+        cQuery += " AND ZA1.D_E_L_E_T_ <> '*'   "  
+        cQuery += " AND ZA1_TIPO = '5'"
+        cQuery += " ) )"	
+
+    
+        cQuery += ")" 	
+    endif
+    cQuery += " ORDER BY C5_NUM "  
+
+    cQuery := ChangeQuery(cQuery)
+    dbUseArea(.T.,"TOPCONN",TcGenQry(,,cQuery),"TMP",.T.,.T.)  
+
+    procregua(TMP->(-RecCount()))
+
+    DBSELECTAREA("TMP")
+    WHILE TMP->(!EOF()) 
+        incproc()
+        AADD(Self:aPedidos,{	TMP->C5_NUM,;			// 01
+                                TMP->C5_CLIENTE,;		// 02
+                                TMP->C5_LOJACLI,;		// 03
+                                TMP->A1_NOME, ;			// 04
+                                TMP->A1_EST, ;			// 05
+                                TMP->A1_COD_MUN, ;		// 06
+                                TMP->A1_MUN,;			// 07
+                                TMP->C5_VOLUME1, ;		// 08
+                                TMP->C5_VEND1,;		 	// 09
+                                TMP->C5_LIBEROK,;		// 10
+                                iif(empty(TMP->C5_FECENT),"20140101",TMP->C5_FECENT),;			// 11
+                                TMP->A1_XBAIRRO,;												// 12
+                                TMP->C5_TRANSP,;												// 13
+                                POSICIONE("SA4",1,XFILIAL("SA4")+TMP->C5_TRANSP,"A4_NOME"),;	// 14
+                                TMP->C5_XNFOMIE,;													// 15
+                                dtoc(stod(TMP->C5_EMISSAO));												// 16
+                                })
+        Self:nPedidos += 1
+        TMP->(dbskip())
+    enddo
+    TMP->(dbclosearea())  
+
+    if empty(Self:aPedidos)
+        msginfo("Nao Existem pedidos para essa rota")  
+        lRet := .F.
+        return(lRet)
+    endif
+    Self:AtuaPedLib() 
+    Self:AtuaPedBlo()  
+    Self:AtuaPedAbe()
+    Self:TotalCarga()	
+
+return(lRet)  
+
+
+
+
+
+//---------------------------------------------------------------------------- */
+Method refresh() Class xCgsTela
+
+    //atualiza totais
+    Self:TotalCarga()	
+
+    //refresh na enchoice
+    Self:oEnchoice:refresh()
+
+    //Pedidos Liberados
+	Self:oPedLiberados:SetArray(self:self:aPedLiberados)
+	Self:oPedLiberados:bLine := {|| {    iif(self:aPedLiberados[Self:oPedLiberados:nAt,1],Self:oMarkOk,Self:oMarkNo),;
+                                        iif(self:aPedLiberados[Self:oPedLiberados:nAt,2],Self:oVerde,Self:oVermelho),;
+                                        self:aPedLiberados[Self:oPedLiberados:nAt,3],;
+                                        self:aPedLiberados[Self:oPedLiberados:nAt,17],;  
+                                        self:aPedLiberados[Self:oPedLiberados:nAt,18],; 
+                                        self:aPedLiberados[Self:oPedLiberados:nAt,4],;
+                                        self:aPedLiberados[Self:oPedLiberados:nAt,5],;
+                                        self:aPedLiberados[Self:oPedLiberados:nAt,6],;
+                                        self:aPedLiberados[Self:oPedLiberados:nAt,7],;
+                                        self:aPedLiberados[Self:oPedLiberados:nAt,8],;
+                                        self:aPedLiberados[Self:oPedLiberados:nAt,9],;
+                                        self:aPedLiberados[Self:oPedLiberados:nAt,10],; 
+                                        self:aPedLiberados[Self:oPedLiberados:nAt,16],;
+                                        self:aPedLiberados[Self:oPedLiberados:nAt,11],;
+                                        self:aPedLiberados[Self:oPedLiberados:nAt,12],;
+                                        self:aPedLiberados[Self:oPedLiberados:nAt,13],;
+                                        self:aPedLiberados[Self:oPedLiberados:nAt,14],;
+                                        self:aPedLiberados[Self:oPedLiberados:nAt,15]; 
+                                        }} 
+    Self:oPedLiberados:refresh()
+
+    //Pedidos Bloqueados
+	Self:oPedBloqueados:SetArray(self:self:aPedBloqueados)
+	Self:oPedBloqueados:bLine := {|| {    iif(self:aPedBloqueados[Self:oPedBloqueados:nAt,1]=="C",Self:oAzul,Self:oAmarelo),;
+                                        iif(self:aPedBloqueados[Self:oPedBloqueados:nAt,2],Self:oVerde,Self:oVermelho),;
+                                        self:aPedBloqueados[Self:oPedBloqueados:nAt,3],;
+                                        self:aPedBloqueados[Self:oPedBloqueados:nAt,17],;  
+                                        self:aPedBloqueados[Self:oPedBloqueados:nAt,18],; 
+                                        self:aPedBloqueados[Self:oPedBloqueados:nAt,4],;
+                                        self:aPedBloqueados[Self:oPedBloqueados:nAt,5],;
+                                        self:aPedBloqueados[Self:oPedBloqueados:nAt,6],;
+                                        self:aPedBloqueados[Self:oPedBloqueados:nAt,7],;
+                                        self:aPedBloqueados[Self:oPedBloqueados:nAt,8],;
+                                        self:aPedBloqueados[Self:oPedBloqueados:nAt,9],;
+                                        self:aPedBloqueados[Self:oPedBloqueados:nAt,10],; 
+                                        self:aPedBloqueados[Self:oPedBloqueados:nAt,16],;
+                                        self:aPedBloqueados[Self:oPedBloqueados:nAt,11],;
+                                        self:aPedBloqueados[Self:oPedBloqueados:nAt,12],;
+                                        self:aPedBloqueados[Self:oPedBloqueados:nAt,13],;
+                                        self:aPedBloqueados[Self:oPedBloqueados:nAt,14],;
+                                        self:aPedBloqueados[Self:oPedBloqueados:nAt,15]; 
+                                        }} 
+    Self:oPedBloqueados:refresh()
+
+    //Pedidos Abertos
+	Self:oPedAbertos:SetArray(self:self:aPedAbertos)
+	Self:oPedAbertos:bLine := {||   {  iif(self:aPedAbertos[Self:oPedAbertos:nAt,1],Self:oVerde,Self:oVermelho),;
+                                        iif(self:aPedAbertos[Self:oPedAbertos:nAt,2],Self:oVerde,Self:oVermelho),;
+                                        self:aPedAbertos[Self:oPedAbertos:nAt,3],;
+                                        self:aPedAbertos[Self:oPedAbertos:nAt,17],;  
+                                        self:aPedAbertos[Self:oPedAbertos:nAt,18],; 
+                                        self:aPedAbertos[Self:oPedAbertos:nAt,4],;
+                                        self:aPedAbertos[Self:oPedAbertos:nAt,5],;
+                                        self:aPedAbertos[Self:oPedAbertos:nAt,6],;
+                                        self:aPedAbertos[Self:oPedAbertos:nAt,7],;
+                                        self:aPedAbertos[Self:oPedAbertos:nAt,8],;
+                                        self:aPedAbertos[Self:oPedAbertos:nAt,9],;
+                                        self:aPedAbertos[Self:oPedAbertos:nAt,10],; 
+                                        self:aPedAbertos[Self:oPedAbertos:nAt,16],;
+                                        self:aPedAbertos[Self:oPedAbertos:nAt,11],;
+                                        self:aPedAbertos[Self:oPedAbertos:nAt,12],;
+                                        self:aPedAbertos[Self:oPedAbertos:nAt,13],;
+                                        self:aPedAbertos[Self:oPedAbertos:nAt,14],;
+                                        self:aPedAbertos[Self:oPedAbertos:nAt,15]; 
+                                        }} 
+    Self:oPedAbertos:refresh()
+
+    //Rotas
+	Self:oRotas:SetArray(self:aRotas)
+    Self:oRotas:bLine := {||   {    iif(self:aRotas[Self:oRotas:nAt,1],oMarkOk,oMarkNo),;
+                                    self:aRotas[Self:oRotas:nAt,2],;
+                                    self:aRotas[Self:oRotas:nAt,3],;
+                                    self:aRotas[Self:oRotas:nAt,4],;
+                                    self:aRotas[Self:oRotas:nAt,5];
+                                    }} 
+    Self:oRotas:refresh()
+
+
+    //totais
+    Self:oSayT10:refresh() 
+    Self:oSayT81:refresh()
+    Self:oSayT82:refresh()
+    Self:oSayT83:refresh()
+    Self:oSayT84:refresh()
+    Self:oSayT5:refresh()
+    Self:oSayT6:refresh()
+    Self:oSayT7:refresh()
+    Self:oSayT8:refresh() 
+    Self:oSayT12:refresh()
+
+return
+
+
+
+
+
+//---------------------------------------------------------------------------- */
+Method AtuaPedLib() Class xCgsTela
+    local x
+    Self:aPedLiberados := {} 
+    for x:=1 to len(Self:aPedidos) 
+        incproc()
+        if  u_xCgsbloqPed(Self:aPedidos[x,1],xfilial("SC5")) == 'L' .and. Self:aPedidos[x,10] == 'S'
+            AADD(Self:aPedLiberados,{	.T.,;
+                            IIF((DATE()+2)>= STOD(Self:aPedidos[x,11]),.F.,.T.),;
+                            Self:aPedidos[x,1],; //nuemro do pedido
+                            stod(Self:aPedidos[x,11]),; //data de entrada
+                            Self:aPedidos[x,2],; //codigo do cliente
+                            Self:aPedidos[x,4],; //nome do cliente
+                            Self:aPedidos[x,5],; //estado
+                            Self:aPedidos[x,7],; //nome do municipio
+                            Self:aPedidos[x,12],;//BAIRRO DE ENTREGA
+                            Self:aPedidos[x,13]+"-"+Self:aPedidos[x,14],; //TRANSPORTADORA
+                            Self:aPedidos[x,8],; //volume 
+                            u_xCgsCalcTPed(4,Self:aPedidos[x,1],xfilial("SC5")),; //CUBAGEN
+                            u_xCgsCalcTPed(2,Self:aPedidos[x,1],xfilial("SC5")),; //peso liquido
+                            u_xCgsCalcTPed(3,Self:aPedidos[x,1],xfilial("SC5")),; //peso bruto
+                            u_xCgsCalcTPed(1,Self:aPedidos[x,1],xfilial("SC5")),; //valor total 
+                            u_xCgsCalcArmPed(Self:aPedidos[x,1],xfilial("SC5")),; //armazem
+                            Self:aPedidos[x,15],;
+                            Self:aPedidos[x,16];
+                            })
+        endif
+    next x   
+
+    if  empty(Self:aPedLiberados)
+        aadd(Self:aPedLiberados,{.T.,.T.," "," "," "," "," "," "," "," ",0,0,0,0,0,"","",""} ) 
+    endif
+                
+ 
+RETURN()
+
+//---------------------------------------------------------------------------- */
+Method AtuaPedBlo() Class xCgsTela
+    local x
+    Self:aPedBloqueados := {}  
+    for x:=1 to len(Self:aPedidos)   
+        incproc()
+        tpBloq :=  u_xCgsbloqPed(Self:aPedidos[x,1],xfilial("SC5"))
+        if  tpBloq <> 'L' .and. Self:aPedidos[x,10] == 'S'
+            AADD(Self:aPedBloqueados,{	tpBloq,;
+                            IIF((DATE()+2)>= STOD(Self:aPedidos[x,11]),.F.,.T.),;
+                            Self:aPedidos[x,1],; //nuemro do pedido
+                            stod(Self:aPedidos[x,11]),; //data de entrega
+                            Self:aPedidos[x,2],; //codigo do cliente
+                            Self:aPedidos[x,4],; //nome do cliente
+                            Self:aPedidos[x,5],; //estado
+                            Self:aPedidos[x,7],; //nome do municipio   
+                            Self:aPedidos[x,12],;//BAIRRO DE ENTREGA
+                            Self:aPedidos[x,13]+"-"+Self:aPedidos[x,14],; //TRANSPORTADORA
+                            Self:aPedidos[x,8],; //volume
+                            u_xCgsCalcTPed(4,Self:aPedidos[x,1],xfilial("SC5")),; //CUBAGEN
+                            u_xCgsCalcTPed(2,Self:aPedidos[x,1],xfilial("SC5")),; //peso liquido
+                            u_xCgsCalcTPed(3,Self:aPedidos[x,1],xfilial("SC5")),; //peso bruto
+                            u_xCgsCalcTPed(1,Self:aPedidos[x,1],xfilial("SC5")),; //valor total 
+                            u_xCgsCalcArmPed(Self:aPedidos[x,1],xfilial("SC5")),; //armazem
+                            Self:aPedidos[x,15],;
+                            Self:aPedidos[x,16];
+                            })
+        endif
+    next x
+    if  empty(Self:aPedBloqueados)
+        aadd(Self:aPedBloqueados,{"C",.T.," "," "," "," "," "," "," "," ",0,0,0,0,0,"","",""} ) 
+    endif
+
+RETURN()
+
+//---------------------------------------------------------------------------- */
+Method AtuaPedAbe() Class xCgsTela
+    local x
+    Self:aPedAbertos := {} 
+    for x:=1 to len(Self:aPedidos)  
+        incproc()
+        if  Self:aPedidos[x,10] <> 'S'
+            AADD(Self:aPedAbertos,{	.T.,;
+                            IIF((DATE()+2)>= STOD(Self:aPedidos[x,11]),.F.,.T.),;
+                            Self:aPedidos[x,1],; //nuemro do pedido
+                            stod(Self:aPedidos[x,11]),; //data de entrega
+                            Self:aPedidos[x,2],; //codigo do cliente
+                            Self:aPedidos[x,4],; //nome do cliente
+                            Self:aPedidos[x,5],; //estado
+                            Self:aPedidos[x,7],; //nome do municipio
+                            Self:aPedidos[x,12],;//BAIRRO DE ENTREGA
+                            Self:aPedidos[x,13]+"-"+Self:aPedidos[x,14],; //TRANSPORTADORA
+                            Self:aPedidos[x,8],; //volume   
+                            u_xCgsCalcTPed(4,Self:aPedidos[x,1],xfilial("SC5")),; //CUBAGEN
+                            u_xCgsCalcTPed(2,Self:aPedidos[x,1],xfilial("SC5")),; //peso liquido
+                            u_xCgsCalcTPed(3,Self:aPedidos[x,1],xfilial("SC5")),; //peso bruto
+                            u_xCgsCalcTPed(1,Self:aPedidos[x,1],xfilial("SC5")),; //valor total 
+                            u_xCgsCalcArmPed(Self:aPedidos[x,1],xfilial("SC5")),; //armazem
+                            Self:aPedidos[x,15],;
+                            Self:aPedidos[x,16];
+                            })
+        endif
+    next x
+
+    if  empty(Self:aPedAbertos)
+        aadd(Self:aPedAbertos,{.T.,.T.," "," "," "," "," "," ", " "," ",0,0,0,0,0,"","",""} ) 
+    endif
+
+RETURN() 
+//---------------------------------------------------------------------------- */
+Method TotalCarga() Class xCgsTela
+    local x
+    Self:nTotVolu := 0
+    Self:nTotPBru := 0
+    Self:nTotPLiq := 0 
+    Self:nTotGera := 0
+    Self:nTotCuba := 0
+    Self:nPedSele := 0
+    Self:nPedLibe := 0
+    Self:nPedAber := 0  
+    Self:nPedBloq := 0	
+
+    for x:=1 to len (Self:aPedBloqueados) 
+        if !empty(Self:aPedBloqueados[x,3])
+            Self:nPedBloq += 1 
+        endif
+    next x 
+
+    for x:=1 to len (Self:aPedAbertos)                                                    
+        if !empty(Self:aPedAbertos[x,3])
+            Self:nPedAber += 1   
+        endif
+    next x
+
+    for x:=1 to len (Self:aPedLiberados)
+        if Self:aPedLiberados[x,1]
+            Self:nTotVolu += Self:aPedLiberados[x,11]
+            Self:nTotCuba += Self:aPedLiberados[x,12]
+            Self:nTotPLiq += Self:aPedLiberados[x,13]
+            Self:nTotPBru += Self:aPedLiberados[x,14] 
+            Self:nTotGera += Self:aPedLiberados[x,15] 
+            Self:nPedSele += 1
+        endif   
+        if !empty(Self:aPedLiberados[x,3])
+            Self:nPedLibe += 1
+        endif
+    next x
+
+    M->ZA4_TOTAL     := Self:nTotGera
+    M->ZA4_TOTPBRU   := Self:nTotPBru
+    M->ZA4_TOTPLIQ   := Self:nTotPLiq
+    M->ZA4_TOTVOLU   := Self:nTotVolu
+    M->ZA4_REGIAO    := Self:cRotas
+    M->ZA4_NROPEDS   := Self:nPedidos
+
+return() 
+//---------------------------------------------------------------------------- */
+Method Gravadados() Class xCgsTela
+    local x
+    Local bcampo := {|nfield| field(nfield) }
+    Local i:= 0
+
+
+
+    if nOpcCg <> 3 // segue apenas em inclusao
+        return()
+    endif  
+
+    //if empty(M->ZA4_NOME)
+    //    msginfo("Informe a descricao da carga!")
+    //    return()
+    //endif	
+//
+    //if empty(M->ZA4_UNIDNEG)
+    //    msginfo("Informe a unidade de negocio!")
+    //    return()
+    //endif	
+//
+    //if empty(M->ZA4_TRANSP)
+    //    msginfo("É obrigatorio o preenchimento da transportadora!")
+    //    return()
+    //endif 
+//
+    //if Self:nTotGera == 0 
+    //    msginfo("Impossivel inclusão de carga com valor zerado!")
+    //    return()
+    //endif        
+                                    
+    IF ZA4->(DBSETORDER(1),DBSEEK(XFILIAL("ZA4")+M->ZA4_CODCARG)) 
+        
+        BEGINSQL alias "TMPE1"
+            SELECT MAX(ZA4_CODCARG) AS NUM FROM %table:ZA4%
+            WHERE D_E_L_E_T_ <> '*'
+            AND ZA4_FILIAL = %exp:xfilial("ZA4")%
+        ENDSQL     	
+        cCodCarg  :=  soma1(TMPE1->NUM)   
+        TMPE1->(dbclosearea())   
+        
+        IF !MSGYESNO("Numero da pre-carga ja existe. Deseja alterar para o numero liberado - "+cCodCarg+"?")
+            RETURN()
+        ENDIF
+    ENDIF
+
+    dbselectarea(cAliasCg)
+    Reclock(cAliasCg,.T.)
+        for i:= 1 to fcount()
+            if "FILIAL" $ fieldname(i)
+                Fieldput(i,xfilial(cAliasCg))  
+            else
+                Fieldput(i,M->&(EVAL(BCAMPO,i)))
+            endif
+
+            M->ZA4_STATUS := 'A'
+        next
+    Msunlock()
+
+
+
+    for x:=1 to len(Self:aPedLiberados)  
+        if Self:aPedLiberados[x,1]
+            DBSELECTAREA("SC5") 
+            dbsetorder(1)
+            dbseek(xfilial("SC5")+Self:aPedLiberados[x,3] )
+            RECLOCK("SC5",.F.)    
+                C5_VEICULO	:= M->ZA4_VEICULO
+                C5_XCARGA   := M->ZA4_CODCARG
+                C5_XDTCARG  := M->ZA4_DTEMIS
+            MSUNLOCK()
+        endif 
+    next x    
+
+    MSGINFO("Carga "+M->ZA4_CODCARG+" incluida com SUCESSO!")
+    ConfirmSX8()   
+    dbseek(xfilial("ZA4")+M->ZA4_CODCARG)        
+    Self:oDlg:END()
+
+return()
+
+//---------------------------------------------------------------------------- */
+Method ChkLiberados(nPos) Class xCgsTela
+    
+    if nOpcCg == 2
+        return()
+    endif  
+
+    if Self:aPedLiberados[nPos,1]
+        Self:aPedLiberados[nPos,1] := .F.
+    ELSE
+        Self:aPedLiberados[nPos,1] := .T.
+    ENDIF
+
+    Self:Refresh()
+
+return()
+
+//---------------------------------------------------------------------------- */
+Method LibPedAuto() Class xCgsTela
+    local x
+    PRIVATE aListLbPedAut := {}
+
+    for x:=1 to len(Self:aPedAbertos)
+        AADD(aListLbPedAut,{.T.,Self:aPedAbertos[X,3],Self:aPedAbertos[X,5],Self:aPedAbertos[X,6]})
+    next x
+
+    DEFINE MSDIALOG oDlg TITLE "Liberação de Pedidos Abertos" FROM 000, 000  TO 300, 500 COLORS 0, 16777215 PIXEL
+
+        @ 003, 003 GROUP oGroup1 TO 130, 245 PROMPT "Pedidos Em Aberto" OF oDlg COLOR 0, 16777215 PIXEL   
+        
+        @ 010, 006 LISTBOX oListLbPedAut Fields HEADER " ","Numero","Cliente","Nome" SIZE 234, 116 OF oDlg PIXEL;
+        ColSizes 50,50 ON dblClick( Alt_LibPedAuto(oListLbPedAut:nAt)) 
+        
+        oListLbPedAut:SetArray(aListLbPedAut)
+        oListLbPedAut:bLine := {|| {;
+        IIF(aListLbPedAut[oListLbPedAut:nAt,1],oOk,oNo),;
+        aListLbPedAut[oListLbPedAut:nAt,2],;
+        aListLbPedAut[oListLbPedAut:nAt,3],;
+        aListLbPedAut[oListLbPedAut:nAt,4];
+        }}                          
+        oListLbPedAut:bHeaderClick := {||Mrk_LibPedAuto()  }  
+        
+        @ 133, 207 BUTTON oButton1 PROMPT "Ok" SIZE 037, 012 OF oDlg PIXEL   ACTION processa({||Process_libAber()})
+        @ 133, 167 BUTTON oButton2 PROMPT "Cancela" SIZE 037, 012 OF oDlg PIXEL ACTION oDlg:end()
+
+    ACTIVATE MSDIALOG oDlg CENTERED
+
+Return   
+  
+STATIC FUNCTION Alt_LibPedAuto(nPos) 
+
+aListLbPedAut[nPos,1] := !aListLbPedAut[nPos,1]
+
+    oListLbPedAut:SetArray(aListLbPedAut)
+    oListLbPedAut:bLine := {|| {;
+      IIF(aListLbPedAut[oListLbPedAut:nAt,1],oOk,oNo),;
+      aListLbPedAut[oListLbPedAut:nAt,2],;
+      aListLbPedAut[oListLbPedAut:nAt,3],;
+      aListLbPedAut[oListLbPedAut:nAt,4];
+    }} 
+    oListLbPedAut:refresh()
+return()
+
+
+STATIC FUNCTION Mrk_LibPedAuto() 
+    local x
+
+    for x:=1 to len(aListLbPedAut)
+        aListLbPedAut[x,1] := !aListLbPedAut[x,1]
+    next x
+
+        oListLbPedAut:SetArray(aListLbPedAut)
+        oListLbPedAut:bLine := {|| {;
+        IIF(aListLbPedAut[oListLbPedAut:nAt,1],oOk,oNo),;
+        aListLbPedAut[oListLbPedAut:nAt,2],;
+        aListLbPedAut[oListLbPedAut:nAt,3],;
+        aListLbPedAut[oListLbPedAut:nAt,4];
+        }} 
+        oListLbPedAut:refresh()
+return()   
+
+static function Process_libAber()
+    local x
+    if msgyesno("Deseja Realmente Liberar os Pedidos Selecionados")
+        procregua(len(aListLbPedAut))
+        for x:=1 to len(aListLbPedAut)    
+            incproc()                            
+            if aListLbPedAut[x,1]  
+                dbSelectArea("SC6")
+                DBSetOrder(1)
+                MsSeek( xFilial("SC6") + aListLbPedAut[x,2] )
+                
+                nValTot := 0
+                While !EOF() .And. SC6->C6_NUM == aListLbPedAut[x,2] .And. SC6->C6_FILIAL == xFilial("SC6")
+                    nValTot += SC6->C6_VALOR
+            
+                    dbSelectArea("SF4")
+                    dBSetOrder(1)
+                    MsSeek( xFilial("SF4") + SC6->C6_TES )
+                            
+                    If RecLock("SC5")
+                        nQtdLib := SC6->C6_QTDVEN
+                        //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+                        //³Recalcula a Quantidade Liberada                                         ³
+                        //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+                        RecLock("SC6") //Forca a atualizacao do Buffer no Top
+                        //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+                        //³Libera por Item de Pedido                                               ³
+                        //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+                        Begin Transaction
+                        /*
+                        ±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+                        ±±³Funcao    ³MaLibDoFat³ Autor ³Eduardo Riera          ³ Data ³09.03.99 ³±±
+                        ±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+                        ±±³Descri+.o ³Liberacao dos Itens de Pedido de Venda                      ³±±
+                        ±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+                        ±±³Retorno   ³ExpN1: Quantidade Liberada                                  ³±±
+                        ±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+                        ±±³Transacao ³Nao possui controle de Transacao a rotina chamadora deve    ³±±
+                        ±±³          ³controlar a Transacao e os Locks                            ³±±
+                        ±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+                        ±±³Parametros³ExpN1: Registro do SC6                                      ³±±
+                        ±±³          ³ExpN2: Quantidade a Liberar                                 ³±±
+                        ±±³          ³ExpL3: Bloqueio de Credito                                  ³±±
+                        ±±³          ³ExpL4: Bloqueio de Estoque                                  ³±±
+                        ±±³          ³ExpL5: Avaliacao de Credito                                 ³±±
+                        ±±³          ³ExpL6: Avaliacao de Estoque                                 ³±±
+                        ±±³          ³ExpL7: Permite Liberacao Parcial                            ³±±
+                        ±±³          ³ExpL8: Tranfere Locais automaticamente                      ³±±
+                        ±±³          ³ExpA9: Empenhos ( Caso seja informado nao efetua a gravacao ³±±
+                        ±±³          ³       apenas avalia ).                                    ³±±
+                        ±±³          ³ExpbA: CodBlock a ser avaliado na gravacao do SC9           ³±±
+                        ±±³          ³ExpAB: Array com Empenhos previamente escolhidos            ³±±
+                        ±±³          ³       (impede selecao dos empenhos pelas rotinas)          ³±±
+                        ±±³          ³ExpLC: Indica se apenas esta trocando lotes do SC9          ³±±
+                        ±±³          ³ExpND: Valor a ser adicionado ao limite de credito          ³±±
+                        ±±³          ³ExpNE: Quantidade a Liberar - segunda UM                    ³±±
+                        */
+                        MaLibDoFat(SC6->(RecNo()),@nQtdLib,.F.,.T.,.F.,.T.,.F.,.F.)
+                        
+                        End Transaction
+                    EndIf
+                    SC6->(MsUnLock())
+                    //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+                    //³Atualiza o Flag do Pedido de Venda                                      ³
+                    //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+                    Begin Transaction
+                    SC6->(MaLiberOk({aListLbPedAut[x,2]},.F.))
+                    End Transaction
+                    dbSelectArea("SC6")
+                    dbSkip()
+                End
+                SC6->(dbCloseArea()) 
+            endif
+        next x     
+    endif	 
+    oDlg:end()
+    Msginfo("Pedidos Liberados. Atualize as rotas da carga!")
+    processa({||oCgTela:AtualizGeral(),"Buscando Pedidos","Aguarde...",.T.})
+return()
+
+
+
+//---------------------------------------------------------------------------- */
+Method AnalisaPedidos() Class xCgsTela
+    local x
+    PRIVATE aListAnalis := {}
+
+    for x:=1 to len(Self:aPedBloqueados)
+        IF  !EMPTY(Self:aPedBloqueados[X,3])
+            AADD(aListAnalis,{.T.,Self:aPedBloqueados[X,3],Self:aPedBloqueados[X,5],Self:aPedBloqueados[X,6],Self:aPedBloqueados[X,1]})  
+        ENDIF
+    next x  
+
+    IF  EMPTY(aListAnalis)
+        MsgInfo("Nao Existe pedidos com Bloqueio de Estoque. Verifique!") 
+        return()
+    ENDIF
+
+    DEFINE MSDIALOG oDlg TITLE "Analise Automatica de bloqueios" FROM 000, 000  TO 300, 500 COLORS 0, 16777215 PIXEL
+
+        @ 003, 003 GROUP oGroup1 TO 130, 245 PROMPT "Pedidos" OF oDlg COLOR 0, 16777215 PIXEL   
+        
+        @ 010, 006 LISTBOX oListAnalis Fields HEADER " ","Numero","Cliente","Nome" SIZE 234, 116 OF oDlg PIXEL;
+        ColSizes 50,50 ON dblClick( Alt_Analis(oListAnalis:nAt)) 
+        
+        oListAnalis:SetArray(aListAnalis)
+        oListAnalis:bLine := {|| {;
+        IIF(aListAnalis[oListAnalis:nAt,1],oOk,oNo),;
+        aListAnalis[oListAnalis:nAt,2],;
+        aListAnalis[oListAnalis:nAt,3],;
+        aListAnalis[oListAnalis:nAt,4];
+        }}                          
+        oListAnalis:bHeaderClick := {||Mrk_analis()  }  
+        
+        @ 133, 207 BUTTON oButton1 PROMPT "Ok" SIZE 037, 012 OF oDlg PIXEL   ACTION processa({||Proc_analis()})
+        @ 133, 167 BUTTON oButton2 PROMPT "Cancela" SIZE 037, 012 OF oDlg PIXEL ACTION oDlg:end()
+
+    ACTIVATE MSDIALOG oDlg CENTERED
+
+return()    
+                                                
+STATIC FUNCTION Alt_Analis(nPos) 
+
+    aListAnalis[nPos,1] := !aListAnalis[nPos,1]
+
+        oListAnalis:SetArray(aListAnalis)
+        oListAnalis:bLine := {|| {;
+        IIF(aListAnalis[oListAnalis:nAt,1],oOk,oNo),;
+        aListAnalis[oListAnalis:nAt,2],;
+        aListAnalis[oListAnalis:nAt,3],;
+        aListAnalis[oListAnalis:nAt,4];
+        }}      
+        oListAnalis:refresh()
+return()
+
+STATIC FUNCTION Mrk_analis() 
+    local x
+
+    for x:=1 to len(aListAnalis)
+        aListAnalis[x,1] := !aListAnalis[x,1]
+    next x
+
+        oListAnalis:SetArray(aListAnalis)
+        oListAnalis:bLine := {|| {;
+        IIF(aListAnalis[oListAnalis:nAt,1],oOk,oNo),;
+        aListAnalis[oListAnalis:nAt,2],;
+        aListAnalis[oListAnalis:nAt,3],;
+        aListAnalis[oListAnalis:nAt,4];
+        }}    
+        oListAnalis:refresh()
+return()      
+ 
+
+static function Proc_analis()
+    local x
+
+    if msgyesno("Deseja realmente Reavaliar Credito e Estoque dos pedidos bloqueados?") 
+        if !empty(oCgTela:aPedBloqueados)    
+            procregua(len(aListAnalis))   
+            for x:=1 to len(aListAnalis) 
+                if aListAnalis[x,1]
+                    incproc()
+                    PRIVATE MV_PAR01 := aListAnalis[x,2]
+                    PRIVATE MV_PAR02 := aListAnalis[x,2]
+                    PRIVATE MV_PAR03 := '      '
+                    PRIVATE MV_PAR04 := 'zzzzzz'
+                    PRIVATE MV_PAR05 := stod("20000101")
+                    PRIVATE MV_PAR06 := stod("20300101")
+                
+                    if aListAnalis[x,5] == "C"
+                        Processa({|lEnd| Ma450Proces("SC9",.T.,.F.,@lEnd)},,,.T.) 
+                    else
+                        Processa({|lEnd| Ma450Processa("SC9",.F.,.T.,@lEnd)},,,.T.)
+                    endif   
+                endif
+            next x
+        else
+            msginfo("Nao Exitem pedidos Bloqueados!")
+        endif
+    endif 
+    oDlg:end()  
+    processa({||oCgTela:AtualizGeral(),"Buscando Pedidos","Aguarde...",.T.})
+return() 
+
+
+
+
+
+
+//---------------------------------------------------------------------------- */
+Method LiberaEmpenho() Class xCgsTela
+    local x
+    PRIVATE aListLbEmp := {}
+
+    for x:=1 to len(Self:aPedLiberados) 
+        if  !empty(Self:aPedLiberados[X,3])
+            AADD(aListLbEmp,{.T.,"Liberado",Self:aPedLiberados[X,3],Self:aPedLiberados[X,6],Self:aPedLiberados[X,7]})   
+        endif
+    next x  
+
+
+    for x:=1 to len(Self:aPedBloqueados)   
+        if !empty(Self:aPedBloqueados[X,3])
+            AADD(aListLbEmp,{.T.,"Bloquedo",Self:aPedBloqueados[X,3],Self:aPedBloqueados[X,6],Self:aPedBloqueados[X,7]})   
+        endif
+    next x  
+
+    if empty(aListLbEmp)
+        msginfo("Nenhum pedido selecionado")
+        return()
+    endif
+
+    DEFINE MSDIALOG oDlg TITLE "Liberação de Empenhos" FROM 000, 000  TO 300, 500 COLORS 0, 16777215 PIXEL
+
+        @ 003, 003 GROUP oGroup1 TO 130, 245 PROMPT "Pedidos Empenhados" OF oDlg COLOR 0, 16777215 PIXEL   
+        
+        @ 010, 006 LISTBOX oListLbEmp Fields HEADER " ","Status","Numero","Cliente","Nome" SIZE 234, 116 OF oDlg PIXEL;
+        ColSizes 50,50 ON dblClick( Alt_LibEmp(oListLbEmp:nAt)) 
+        
+        oListLbEmp:SetArray(aListLbEmp)
+        oListLbEmp:bLine := {|| {;
+        IIF(aListLbEmp[oListLbEmp:nAt,1],oOk,oNo),;
+        aListLbEmp[oListLbEmp:nAt,2],;
+        aListLbEmp[oListLbEmp:nAt,3],;
+        aListLbEmp[oListLbEmp:nAt,4],;
+        aListLbEmp[oListLbEmp:nAt,5];
+        }}                          
+        oListLbEmp:bHeaderClick := {||Mrk_LibEmp()  }  
+        
+        @ 133, 207 BUTTON oButton1 PROMPT "Ok" SIZE 037, 012 OF oDlg PIXEL   ACTION processa({||Proc_LibEmp()})
+        @ 133, 167 BUTTON oButton2 PROMPT "Cancela" SIZE 037, 012 OF oDlg PIXEL ACTION oDlg:end()
+
+    ACTIVATE MSDIALOG oDlg CENTERED
+
+
+return()    
+                                                
+STATIC FUNCTION Alt_LibEmp(nPos) 
+
+    aListLbEmp[nPos,1] := !aListLbEmp[nPos,1]
+
+        oListLbEmp:SetArray(aListLbEmp)
+        oListLbEmp:bLine := {|| {;
+        IIF(aListLbEmp[oListLbEmp:nAt,1],oOk,oNo),;
+        aListLbEmp[oListLbEmp:nAt,2],;
+        aListLbEmp[oListLbEmp:nAt,3],;
+        aListLbEmp[oListLbEmp:nAt,4],;
+        aListLbEmp[oListLbEmp:nAt,5];
+        }}  
+        oListLbEmp:refresh()
+return()
+
+STATIC FUNCTION Mrk_LibEmp() 
+    local x
+
+    for x:=1 to len(aListLbEmp)
+        aListLbEmp[x,1] := !aListLbEmp[x,1]
+    next x
+
+        oListLbEmp:SetArray(aListLbEmp)
+        oListLbEmp:bLine := {|| {;
+        IIF(aListLbEmp[oListLbEmp:nAt,1],oOk,oNo),;
+        aListLbEmp[oListLbEmp:nAt,2],;
+        aListLbEmp[oListLbEmp:nAt,3],;
+        aListLbEmp[oListLbEmp:nAt,4],;
+        aListLbEmp[oListLbEmp:nAt,5];
+        }}  
+        oListLbEmp:refresh()
+return()      
+      
+static function Proc_LibEmp()               
+    local x
+    private lMsErroAuto   
+    procregua(len(aListLbEmp))
+    for x:=1 to len(aListLbEmp)
+        incproc()
+        if aListLbEmp[x,1]  
+            aCabec := {}
+            aItens := {} 
+            dbselectarea("SC5")
+            dbsetorder(1)
+            dbseek(xfilial("SC5")+aListLbEmp[x,3])
+            
+            aAdd(aCabec,{"C5_FILIAL"          ,xfilial("SC5")  ,Nil})
+            aAdd(aCabec,{"C5_NUM"             ,SC5->C5_NUM     ,Nil})
+
+            dbselectarea("SC6")
+            dbsetorder(1)      
+            dbseek(xfilial("SC6")+aListLbEmp[x,3])   
+            while SC6->(!EOF()) .AND. aListLbEmp[x,3] == SC6->C6_NUM      
+                aLinha := {}
+                aadd(aLinha,{"LINPOS","C6_ITEM",SC6->C6_ITEM}) 
+            //	aAdd(aLinha,{"C6_OPER" ,"01",nil}) 
+                aAdd(aLinha,{"C6_QTDLIB",0,nil}) 
+                aAdd(aLinha,{"C6_QTDEMP",0,nil}) 
+                aadd(aLinha,{"AUTDELETA","N",Nil})   
+
+                aadd(aItens,aLinha)
+                SC6->(dbskip())
+            ENDDO
+            
+            MsExecAuto({|x, y, z| MATA410(x, y, z)}, aCabec, aItens, 4) 
+            
+            If lMsErroAuto        
+                Alert("Erro na alteração do pedido n - "+SC5->C5_NUM)     
+                oDlg:end()
+                return() 
+            ELSE    
+                
+                BEGINSQL alias "TMP"    
+                    select C6_XQTDORI,C6_PRCVEN, R_E_C_N_O_  as rec
+                    from SC6010 
+                    where D_E_L_E_T_ = '*' 
+                    AND C6_XCORTE = 'S' 
+                    AND C6_NUM = %exp:aListLbEmp[x,3]%
+                ENDSQL  
+                If !TMP->(Eof())  
+                    WHILE TMP->(!EOF())
+                        dbselectarea("SC6")
+                        SC6->(dbGoTo(TMP->rec))	 
+                        RECLOCK("SC6",.F.)   
+                            C6_QTDVEN := TMP->C6_XQTDORI  
+                            C6_VALOR  := TMP->(C6_XQTDORI*C6_PRCVEN)
+                            DBRECALL()   
+                        MSUNLOCK()	               	
+                TMP->(DBSKIP())
+                ENDDO	     
+            ENDIF  
+            TMP->(DBCLOSEAREA())
+        ENDIF
+        endif
+    next x
+    oDlg:end() 
+    processa({||oCgTela:AtualizGeral(),"Buscando Pedidos","Aguarde...",.T.})
+return()       
+
+
+
+
+
+
+
+//---------------------------------------------------------------------------- */
+Method OpcoesPedidos(cDesc) Class xCgsTela
+    local rArea 	:= getarea()   
+    local cGetNPed  
+    private l410Auto
+    private nOpc 
+
+    if cDesc == 1 //"Pedidos Liberados"       
+        cGetNPed := Self:aPedLiberados[Self:oPedLiberados:nAt,3]
+    elseif cDesc == 2 //"Pedidos Bloqueados"  
+        cGetNPed := Self:aPedBloqueados[Self:oPedBloqueados:nAt,3]
+    elseif cDesc == 3 //"Pedidos Abertos"  
+        cGetNPed := Self:aPedAbertos[Self:oPedAbertos:nAt,3]
+    else    
+        msginfo("Pedido nao Encontrado")
+        return()
+    endif
+        
+	
+	if funname() <> 'XCARGAS'
+		Private aRotina := {} 
+		aAdd(aRotina, {"Pesquisar" , "AxPesqui", 0, 1}) 
+		aAdd(aRotina, {"Visualizar", "AxVisual", 0, 2}) 
+		aAdd(aRotina, {"Incluir"   , "AxInclui", 0, 3}) 
+		aAdd(aRotina, {"Alterar"   , "AxAltera", 0, 4}) 
+		aAdd(aRotina, {"Excluir"   , "AxDeleta", 0, 5}) 
+	endif
+	
+	dbselectarea("SC6")
+	dbsetorder(1)
+	dbseek(xfilial("SC6")+cGetNPed)      
+	
+	dbselectarea("SC5")
+	dbsetorder(1)
+	dbseek(xfilial("SC5")+cGetNPed)   
+	
+		  DEFINE MSDIALOG oDlg TITLE "Pedido Nº "+cGetNPed FROM 000, 000  TO 070, 250 COLORS 0, 16777215 PIXEL
+		
+		    @ 002, 002 GROUP oGroup1 TO 031, 123 PROMPT "Opções do pedido" OF oDlg COLOR 0, 16777215 PIXEL
+		    @ 014, 003 BUTTON oButton1 PROMPT "Visualizar" SIZE 037, 012 OF oDlg PIXEL  action(	A410Visual("SC5",recno(),2) ) 
+		    @ 014, 043 BUTTON oButton2 PROMPT "Alterar" SIZE 037, 012 OF oDlg PIXEL action( AlteraPV(recno())) 
+		    @ 014, 083 BUTTON oButton3 PROMPT "Copiar" SIZE 037, 012 OF oDlg PIXEL action(	A410PCopia("SC5",recno(),6) ) 
+		
+		  ACTIVATE MSDIALOG oDlg CENTERED
+		  
+	restarea(rArea)
+	processa({||oCgTela:AtualizGeral(),"Buscando Pedidos","Aguarde...",.T.})
+return()
+Static Function AlteraPV(nRecno)
+    Local aArea := GetArea()
+    Private Inclui    := .F.
+    Private Altera    := .T.
+    Private nOpca     := 1   
+    Private cCadastro := "Pedido de Vendas"  
+    Private aRotina := {}
+        
+    DbSelectArea("SC5")
+    dbSetOrder(1)
+    SC5->(DbGoTo(nRecno))
+
+    MatA410(Nil, Nil, Nil, Nil, "A410Altera")
+        
+    SC5->(DbCloseArea())
+    
+    RestArea(aArea)
+    oDlg:end()
+Return         
+

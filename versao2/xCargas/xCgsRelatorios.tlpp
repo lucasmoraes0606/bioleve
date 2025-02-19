@@ -1,0 +1,27 @@
+#INCLUDE "Protheus.ch"
+#INCLUDE "fwbrowse.ch"
+
+#DEFINE ENTER CHR(13)+CHR(10)
+#DEFINE COL_LEFT "col_left"
+#define WND_BROWSE  "wnd_browse"
+#define WND_ENCHOICE "wnd_enchoice"
+#define WND_RESULT  "wnd_result"
+
+
+
+
+user function xCgsR_Bloqueados()
+    local lMaxmized := .f.
+    local cTitulo1  := "FAT"
+    local cTitulo2  := "Pedidos"
+    local cTitulo3  := "Bloqueados"
+
+    
+
+    cSql := "Select Top(10) * From SA1320"
+
+    oRelCons  := xGgsConsulta():New(lMaxmized,cTitulo1,cTitulo2,cTitulo3)
+    oRelCons:ExcecSQl(cSql)
+    oRelCons:Show()
+
+return()
