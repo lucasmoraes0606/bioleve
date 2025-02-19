@@ -1,0 +1,401 @@
+#INCLUDE "Protheus.ch"
+
+#DEFINE ENTER CHR(13)+CHR(10)
+
+User Function xCgsRota()
+
+    Private cCadastro:='Cadastro de Rotas"
+    Private cAlias1:= "SZ4"
+    Private cAlias2:= "SZ5"
+    Private aRotina:= {}
+    PRIVATE aCores := {}
+
+
+    //Montar o vetor aRotina, obrigatorio para utilização da função mBrowse()
+
+    aAdd( aRotina, {"Pesquisar"	, "AxPesqui" 	, 0, 1 })
+    aAdd( aRotina, {"Visualizar", "u_xCgMd3Rota"	, 0, 2 })
+    aAdd( aRotina, {"Incluir"	, "u_xCgMd3Rota"	, 0, 3 })
+    aAdd( aRotina, {"Alterar"	, "u_xCgMd3Rota"	, 0, 4 })
+    aAdd( aRotina, {"Excluir"	, "u_xCgMd3Rota"	, 0, 5 }) 
+    //aAdd( aRotina, {"Atua/clientes"	, "u_xAplica"	, 0, 6 }) 
+    aAdd( aRotina, {"Legenda"	, "u_xCgRotaLeg"	, 0, 7 }) 
+
+    //Selecionar a tabela pai, ordenar e posicionar no primeiro registro da ordem
+
+    dbselectarea(cAlias1)
+    dbsetorder(1)
+    dbgotop()
+
+
+    //Executar a função mBrowse para a tabela mencionada
+
+    aAdd(aCores, { "Z4_VEND <> '000032' ", 'BR_VERDE'})
+    aAdd(aCores, { "Z4_VEND =  '000032' ", 'BR_PRETO'})
+
+    mBrowse(,,,,cAlias1,,,,,,aCores)
+
+return
+
+
+User Function xCgMd3Rota(cAlias,nRecno,nOpc)
+    //Declaração de Variaveis
+
+    Local cLinok := "ValidLin"
+    Local cTudook := "md3tudok"
+    Local nOpce := nopc
+    Local nOpcg := nopc
+    Local cFieldok := "allwaystrue"
+    Local lVirtual := .T.
+    Local nLinhas := 9999
+    Local nFreeze := 0
+    Local lRet := .T.
+    Private aCols := {}
+    Private aHeader := {}
+    Private aCpoEnchoice := {}
+    Private aAltEnchoice := {}
+    Private aAlt := {}   
+
+    //Criar as variaveis M->Z2_??? da tabela pai
+    Regtomemory(cAlias1,(nOpc==3))   
+
+    //Criar as variaveis M->Z2_??? da tabela filho
+    Regtomemory(cAlias2,(nOpc==3))  
+
+    //Criar o vetor aHeader, que eh o vetor que tem as caracteristicas para os campos da Getdados
+    CriaHeader()    
+
+    //Criar o vetor aCols, que eh o vetor que tem os dados preenchidos pelo usuario, relacionado com o vetor aHeader
+    CriaCols(nOpc)  
+
+    //Executa a funcao Modelo3()
+    lRet:=Modelo3(cCadastro,cAlias1,cAlias2,aCpoEnchoice,cLinok,cTudook,nOpce,;
+    nOpcg,cFieldok,lVirtual,nLinhas,aAltenchoice,nFreeze,,,160) 
+
+    //Se confirmado
+    if lRet
+        
+        //Se opcao for inclusão
+        if nOpc == 3
+            if MsgYesNo("Confirma gravação dos dados ?",cCadastro)
+                Processa({||Grvdados()},cCadastro,"Gravando os dados, aguarde...")
+            endif
+            
+            //Se opção for alteração
+            
+        elseif nOpc == 4
+            if MsgYesNo("Confirma alteração dos dados ?", cCadastro)
+                Processa({||Altdados()},cCadastro,"Alterando os dados, aguarde...")
+            endif
+            
+            //Se opção for exclusão
+            
+            
+        elseif nOpc == 5
+            if MsgYesNo("Confirma exclusão dos dados ?", cCadastro)
+                Processa({||Excluidados()},cCadastro,"Excluindo os dados, aguarde...")
+            endif
+        endif
+    else
+        RollbackSx8()
+    endif
+return
+
+// Criando a função CriaHeader
+
+Static Function CriaHeader()
+
+    aHeader:= {}
+    aCpoEnchoice := {}
+    aAltEnchoice :={}
+
+    dbselectarea("SX3")
+    dbsetorder(1)
+    dbseek(cAlias2)
+    while ! eof() .and. x3_arquivo == cAlias2
+        if x3uso(x3_usado) .and. cnivel >= x3_nivel
+            aAdd(aHeader,{trim(x3_titulo),;
+            x3_campo,;
+            x3_picture,;
+            x3_tamanho,;
+            x3_decimal,;
+            x3_valid,;
+            x3_usado,;
+            x3_tipo,;
+            x3_arquivo,;
+            x3_context})
+            
+        endif
+        dbskip()
+    enddo
+
+    dbseek(cAlias1)
+    while ! eof() .and. x3_arquivo == cAlias1
+        if x3uso(x3_usado) .and. cnivel >= x3_nivel
+            
+            aAdd(aCpoEnchoice,x3_campo)
+            aAdd(aAltEnchoice,x3_campo)
+        endif
+        dbskip()
+    enddo
+return
+
+//Criando a função CriaCols
+
+Static function CriaCols(nOpc)
+    Local nQtdcpo := 0
+    Local i:= 0
+    Local nCols := 0   
+    nQtdcpo := len(aHeader)
+    aCols:= {}
+    aAlt := {}
+
+    if nOpc == 3
+        aAdd(aCols,array(nQtdcpo+1))
+        
+        for i := 1 to nQtdcpo  
+            aCols[1,i] := Criavar(aHeader[i,2])
+        next i
+        aCols[1,nQtdcpo+1] := .F.
+    else
+        
+        dbselectarea(cAlias2)
+        dbsetorder(1)
+        dbseek(xfilial(cAlias2)+(cAlias1)->Z4_CODROT)
+        while .not. eof() .and. (cAlias2)->Z5_filial == xfilial(cAlias2) .and. (cAlias2)->Z5_CODROT==(cAlias1)->Z4_CODROT
+            aAdd(aCols,array(nQtdcpo+1))
+            nCols++
+            for i:= 1 to nQtdcpo
+                if aHeader[i,10] <> "V"
+                    aCols[nCols,i] := Fieldget(Fieldpos(aHeader[i,2]))
+                else
+                    aCols[nCols,i] := Criavar(aHeader[i,2],.T.)
+                endif
+            next i
+            
+            aCols[nCols,nQtdcpo+1] := .F.
+            aAdd(aAlt,Recno())
+            
+            dbselectarea(cAlias2)
+            dbskip()
+        enddo
+    endif
+return
+
+
+
+Static Function GrvDados()
+
+    Local bcampo := {|nfield| field(nfield) }
+    Local i:= 0
+    Local y:= 0
+    Local nItem :=0
+
+    procregua(len(aCols)+fCount())
+    dbselectarea(cAlias1)
+    Reclock(cAlias1,.T.)
+
+    for i:= 1 to fcount()
+        incproc()
+        if "FILIAL" $ fieldname(i)
+            Fieldput(i,xfilial(cAlias1))
+            
+        else
+            Fieldput(i,M->&(EVAL(BCAMPO,i)))
+        endif
+    next
+
+    Msunlock()
+
+    dbselectarea(cAlias2)
+    dbsetorder(1)
+
+    for i:=1 to len(aCols)
+        incproc()
+        if .not. aCols[i,len(aHeader)+1]
+            Reclock(cAlias2,.T.)
+            
+            for y:= 1 to len(aHeader)
+                Fieldput(Fieldpos(trim(aHeader[y,2])),aCols[i,y])
+            next
+            
+            nItem++
+            
+            (cAlias2)->Z5_filial 	:= xfilial(cAlias2)
+            (cAlias2)->Z5_CODROT 	:= (cAlias1)->Z4_CODROT
+            (cAlias2)->Z5_item 	:= strzero(nItem,4,0)
+            
+            Msunlock()
+            
+        endif
+    ConfirmSX8()
+    RollbackSx8()	
+    next
+
+return
+
+
+
+Static Function Altdados()
+
+    Local bcampo := { |nfield| field(nfield) }
+    Local i:= 0
+    Local y:= 0
+    Local nitem := 0
+
+    procregua(len(aCols)+fCount())
+    dbselectarea(cAlias1)
+    Reclock(cAlias1,.F.)
+    for i:= 1 to fcount()
+        incproc()
+        if "FILIAL" $ fieldname(i)
+            Fieldput(i,xfilial(cAlias1))
+        else
+            Fieldput(i,M->&(EVAL(BCAMPO,i)))
+        endif
+    next i
+    Msunlock()
+    dbselectarea(cAlias2)
+    dbsetorder(1)
+    nItem := len(aAlt)+1
+    for i:=1 to len(aCols)
+        if i<=len(aAlt)
+            dbgoto(aAlt[i])
+            Reclock(cAlias2,.F.)
+            if aCols[i,len(aHeader)+1]
+                DbDelete()
+            else
+                for y:= 1 to len(aHeader)
+                    Fieldput(Fieldpos(trim(aHeader[y,2])),aCols[i,y])
+                next y
+            endif
+            Msunlock()
+        else
+            if ! aCols[i,len(aHeader)+1]
+                Reclock(cAlias2,.T.)
+                for y:= 1 to len(aHeader)
+                    Fieldput(Fieldpos(trim(aHeader[y,2])),aCols[i,y])
+                next y
+                (cAlias2)->Z5_filial := xfilial(calias2)
+                (cAlias2)->Z5_CODROT := (cAlias1)->Z4_CODROT
+                (cAlias2)->Z5_item := strzero(nItem,4,0)
+                Msunlock()
+                nItem++			
+            endif
+        endif
+    next i
+    return
+
+    &nbsp;
+
+//Criando a função ExcluiDados
+
+Static Function Excluidados()
+
+    procregua(len(aCols)+1)
+    dbselectarea(cAlias2)
+    dbsetorder(1)
+    dbseek(xfilial(cAlias2)+(cAlias1)->Z4_CODROT)
+    do while .not. eof() .and. (cAlias2)->Z5_FILIAL == xfilial(cAlias2) .and. (cAlias2)->Z5_CODROT==(cAlias1)->Z4_CODROT
+        incproc()
+        
+        Reclock(cAlias2,.F.)
+        DbDelete()
+        Msunlock()
+        
+        dbskip()
+        
+    enddo
+
+    dbselectarea(cAlias1)
+    dbsetorder(1)
+    incproc()
+
+    Reclock(cAlias1,.F.)
+    DbDelete()
+    Msunlock()
+
+return
+
+
+static function Md3TudOk()
+    Local lRet:= .T.
+    Local i:=0
+    Local nDel :=0
+
+    for i:=1 to len(aCols)
+        if aCols[i,len(aHeader)+1]
+            nDel++
+        endif
+    next
+
+    if nDel == len(aCols)
+        Msginfo("Para excluir todos os itens, utilize a opção EXCLUIR",cCadastro)
+        lRet := .F.
+    endif
+return(lRet)
+
+
+
+/******************************************
+ * LEGENDAS                               *
+/******************************************/
+
+user Function xCgRotaLeg()
+
+    Local aLegenda	 := {}
+        aAdd(aLegenda,{"BR_PRETO"		,'Sem RCA'})
+        aAdd(aLegenda,{"BR_VERDE"	    ,'Com RCA'})
+    BrwLegenda('Cadastro de Rotas','Cadastro de Rotas', aLegenda )
+
+Return .T.
+
+
+static function ValidLin() 
+    LOCAL nRet 		:= .T.  
+    LOCAL rArea	  	:= GETAREA() 
+    local cChave 	:= ACOLS[N,2]+ACOLS[N,3]+ACOLS[N,5]   
+
+    local cMsg		:= ''
+
+    if M->Z4_TIPO == '3'
+        RETURN .T.
+    endif
+
+    if empty(aCols[N,2])
+        cMsg += "Z5_EST - Estado"+ENTER
+    endif
+    if empty(aCols[N,3])
+        cMsg += "Z5_CODMUN - Código do Município"+ENTER
+    endif
+
+    if !empty(cMsg)
+        MsgAlert('Preencha os campos obrigatórios:'+ENTER+cMsg)
+        return(.F.)
+    endif
+            
+    IF M->Z4_BAIRRO == 'S' .AND. EMPTY(ACOLS[N,5])
+        MSGINFO("Para rotas que consideram bairro é necessario informar o campo BAIRRO")
+        nRet := .F. 
+    ENDIF            
+
+    cQuery := " select  Z5_CODROT AS CODROT from  "+RETSQLNAME("SZ5") 		  
+    cQuery += "  where D_E_L_E_T_ <> '*' 
+
+    IF M->Z4_BAIRRO == 'S'     
+        cQuery += "	and Z5_EST+Z5_CODMUN+Z5_CODBAIR = '"+alltrim(cChave)+"'"  
+    else          
+        cQuery += "	and Z5_EST+Z5_CODMUN = '"+substr(alltrim(cChave),1,7)+"'" 
+    endif     
+
+    ChangeQuery(cQuery)
+    dbUseArea(.T.,"TOPCONN",TcGenQry(,,cQuery),"TM1",.T.,.T.)    
+
+    if !EMPTY(TM1->CODROT).and. TM1->CODROT <> M->Z4_CODROT  .and. !acols[n,len(aheader)+1]
+        ALERT("REGISTRO PERTENCE A ROTA "+TM1->CODROT+".Verifique!")   
+        nRet := .F. 	
+    endif  
+
+    TM1->(DbCloseArea()) 
+    restarea(rArea)
+return(nRet)

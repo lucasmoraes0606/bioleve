@@ -1,0 +1,307 @@
+#INCLUDE "rwmake.ch"
+#INCLUDE "protheus.ch" 
+#INCLUDE "TOPCONN.CH
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
+ฑฑบPrograma  ณImpress   บAutor  ณMicrosiga           บ Data ณ  09/10/08   บฑฑ
+ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
+ฑฑบDesc.     ณ     INICIO DA IMPRESSีES                                   บฑฑ
+ฑฑบ          ณ                                                            บฑฑ
+ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
+ฑฑบUso       ณ AP                                                         บฑฑ
+ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+
+User Function xCgsRCortes()
+
+    Local 	cCadastro  	:= OemToAnsi("Impressao Relatorio de Cortes de Pedidos de Venda")
+    Local 	aSays      	:= {}
+    Local 	aButtons   	:= {}
+    Local 	nOpca    	:= 0  
+
+    private  _nLin      := 0
+    Private cPerg   	:= PadR("XCORTES", 10)  
+    Private oFont1		:= TFont():New( "Courier New",,10,,.F.,,,,,.F. ) 
+    Private oFont2		:= TFont():New( "Courier New",,10,,.T.,,,,,.F. ) // NEGRITO
+    Private oFont3		:= TFont():New( "Courier New",,09,,.F.,,,,,.F. )
+    Private oFont4		:= TFont():New( "Courier New",,21,,.T.,,,,,.F. ) // NEGRITO
+    Private oFont5		:= TFont():New( "Courier New",,16,,.T.,,,,,.F. )
+    Private oFont6		:= TFont():New( "Courier New",,16,,.T.,,,,,.F. ) // NEGRITO
+    Private oFont7		:= TFont():New( "Courier New",,18,,.T.,,,,,.F. ) // NEGRITO
+
+    Private oFont8		:= TFont():New( "Times New Roman",,10,,.T.,,,,.T.,.F. ) // NEGRITO
+    Private oFont9		:= TFont():New( "Times New Roman",,14,,.T.,,,,.T.,.F. ) // NEGRITO
+    Private oFont10		:= TFont():New( "Times New Roman",,11,,.F.,,,,,.F. )
+    Private oFont11		:= TFont():New( "Times New Roman",,10,,.F.,,,,.T.,.F. ) 
+    Private oFont12		:= TFont():New( "Times New Roman",,11,,.T.,,,,.T.,.F. ) // NEGRITO
+    Private oFont13		:= TFont():New( "Times New Roman",,08,,.F.,,,,.T.,.F. ) // NEGRITO  
+
+    private NPAG 	:= 1   
+    private vlTotal := 0
+    ValidPerg()
+
+    pergunte("XCORTES",.F.)
+
+
+    AAdd(aSays,cCadastro)
+
+    AAdd(aButtons, { 5,.T.,{|| Pergunte(cPerg,.T. ) } } )
+    AAdd(aButtons, { 1,.T.,{|| nOpca := 1,FechaBatch() }} )
+    AAdd(aButtons, { 2,.T.,{|| nOpca := 0,FechaBatch() }} )
+
+    FormBatch( cCadastro, aSays, aButtons )
+
+    If nOpca == 1
+        Processa( { |lEnd| ImpCorte() })
+    Endif
+
+Return
+
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
+ฑฑบPrograma  ณImpress   บAutor  ณMicrosiga           บ Data ณ  09/10/08   บฑฑ
+ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
+ฑฑบDesc.     ณ     INICIO DA IMPRESSีES                                   บฑฑ
+ฑฑบ          ณ                                                            บฑฑ
+ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
+ฑฑบUso       ณ AP                                                         บฑฑ
+ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+STATIC FUNCTION ImpCorte()
+    private nPag 	:= 1
+    PRIVATE _nLin 	:= 0050
+    PRIVATE oBrush1 := TBrush():New( , CLR_LIGHTGRAY ) 
+
+    oPrn:= TMSPrinter():New()
+    oPrn:setPortrait()
+    oPrn:SetPaperSize(9) // A4
+    oPrn:Setup()
+    oPrn:StartPage()
+
+    CabecCorte(oPrn,1) 
+    detailCorte(oPrn,1) 
+
+    Set Filter to
+    oPrn:EndPage()
+    oPrn:Preview()
+    MS_FLUSH()
+
+
+return()   
+
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
+ฑฑบPrograma  ณImpress   บAutor  ณMicrosiga           บ Data ณ  09/10/08   บฑฑ
+ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
+ฑฑบDesc.     ณ     INICIO DA IMPRESSีES                                   บฑฑ
+ฑฑบ          ณ                                                            บฑฑ
+ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
+ฑฑบUso       ณ AP                                                         บฑฑ
+ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+STATIC FUNCTION CabecCorte(oPrn,nOpc) 
+                    
+    cBitMap:= "lgrl01.BMP"
+    cBitIso:= ""
+    cBitSel:= "LOGO_TOPFIVE.BMP"  
+
+    oPrn:Say(040,0700,"ALIMENTOS TIA SONIA",oFont7,100) 
+
+    oPrn:Say(120,0780,"CORTES PEDIDOS",oFont6,100) 	
+
+    oPrn:SayBitmap(050,044,cBitMap,200,125 ) //700,300
+    oPrn:Say(040,2000,"Emissใo .: "+ DtoC(Date()),oFont8,100) 
+    oPrn:Say(080,2000,"Hora      .: "+ Time(),oFont8,100)
+    oPrn:Say(120,2000,"Pแgina   .: "+ StrZero(nPag,2),oFont8,100)
+    oPrn:Box(040+0000,0040,185+0000,2370)
+    oPrn:Box(040+0000,0040,185+0000,1990)   
+
+
+    oPrn:FillRect( {210,0040,210+050,2380}, oBrush1 ) 
+    oPrn:Say(0215,0040,"COD"	   		,oFont8,100  )
+    oPrn:Say(0215,0200,"DESCRICAO"		,oFont8,100  )
+    oPrn:Say(0215,1070,"CLIENTE"		,oFont8,100  )
+    oPrn:Say(0215,1670,"ORI"	 		,oFont8,100  )
+    oPrn:Say(0215,1770,"ENT"	 		,oFont8,100  )   
+    oPrn:Say(0215,1870,"COR"	 		,oFont8,100  ) 
+    oPrn:Say(0215,1970,"DT.CORTE"		,oFont8,100  )  
+    oPrn:Say(0215,2200,"USR.CORT"		,oFont8,100  ) 
+		
+Return()  
+
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
+ฑฑบPrograma  ณImpress   บAutor  ณMicrosiga           บ Data ณ  09/10/08   บฑฑ
+ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
+ฑฑบDesc.     ณ     INICIO DA IMPRESSีES                                   บฑฑ
+ฑฑบ          ณ                                                            บฑฑ
+ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
+ฑฑบUso       ณ AP                                                         บฑฑ
+ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+STATIC FUNCTION detailCorte(oPrn,nOpc)  
+
+    LOCAL nTotOrig := 0
+    local nTotEntr := 0
+    local nTotCort := 0
+
+    BEGINSQL alias "TMP"   
+
+        SELECT  A1_COD,
+                A1_NOME,
+                C6_PRODUTO,	
+                B1_DESC,
+                C6_XQTDORI AS QTD_ORIG,
+                CASE WHEN SC6.D_E_L_E_T_ = '*' THEN 0 ELSE C6_QTDVEN END AS QTD_ENTRE,
+                CASE WHEN SC6.D_E_L_E_T_ = '*' THEN C6_XQTDORI ELSE C6_XQTDORI-C6_QTDVEN END AS QTD_CORTE,
+                C6_XDTCORT,
+                C6_XUSRCOR
+        
+        
+        FROM SC6010 SC6, SB1010 SB1, SA1010 SA1
+        
+        WHERE C6_XCORTE = 'S'
+        AND A1_COD = C6_CLI
+        AND A1_LOJA = C6_LOJA
+        AND B1_COD = C6_PRODUTO
+        
+        AND A1_COD BETWEEN %exp:MV_PAR01%   AND %exp:MV_PAR02% 
+        AND A1_VEND BETWEEN %exp:MV_PAR03%   AND %exp:MV_PAR04%  
+        AND C6_XDTCORT BETWEEN %exp:DTOS(MV_PAR05)%   AND %exp:DTOS(MV_PAR06)%
+        AND C6_PRODUTO BETWEEN %exp:MV_PAR07%   AND %exp:MV_PAR08% 	 
+        
+        ORDER BY C6_PRODUTO			
+    ENDSQL	
+
+    WHILE TMP->(!EOF())	   	
+            
+        oPrn:line(_nLin+210,0040,_nLin+0210,2370)  
+        
+        oPrn:Say(_nLin+0215,0040,TMP->C6_PRODUTO			  					   				,oFont3,100  )
+        oPrn:Say(_nLin+0215,0200,SUBSTR(TMP->B1_DESC,1,40)	   							  		,oFont3,100  )      
+        oPrn:Say(_nLin+0215,1070,TMP->(A1_COD+'-'+SUBSTR(A1_NOME,1,20))			  				,oFont3,100  )
+        oPrn:Say(_nLin+0215,1670,ALLTRIM(TRANSFORM(TMP->QTD_ORIG,"@E 999,999,999")) 	  		,oFont3,100  )      	
+        oPrn:Say(_nLin+0215,1770,ALLTRIM(TRANSFORM(TMP->QTD_ENTRE,"@E 999,999,999")) 	  		,oFont3,100  )   	
+        oPrn:Say(_nLin+0215,1870,ALLTRIM(TRANSFORM(TMP->QTD_CORTE,"@E 999,999,999")) 	  		,oFont3,100  )    
+        oPrn:Say(_nLin+0215,1970,DTOC(STOD(TMP->C6_XDTCORT)) 	  	   							,oFont3,100  )        
+        oPrn:Say(_nLin+0215,2200,UsrRetName(ALLTRIM(TMP->C6_XUSRCOR))	  	  					,oFont3,100  )   
+        
+        nTotOrig += TMP->QTD_ORIG
+        nTotEntr += TMP->QTD_ENTRE
+        nTotCort += TMP->QTD_CORTE
+            
+        _nLin += 050 
+        If _nLin > 3000
+            oPrn:Say(_nLin+0300,1200,"* * * * CONTINUA NA PRำXIMA PมGINA * * * *"       ,oFont8,100)
+            _nLin := 0050
+            nPag  := nPag+1
+            oPrn:EndPage()
+            oPrn:StartPage()
+            CabecCorte(oPrn,2)//IMPRIME CABECALHO
+        Endif 
+    TMP->(DBSKIP())  
+    ENDDO            
+    TMP->(DBCLOSEAREA())        
+
+
+
+    oPrn:line(_nLin+210,0040,_nLin+0210,2370) 
+    _nLin += 050 
+    oPrn:line(_nLin+210,0040,_nLin+0210,2370)      
+    oPrn:Say(_nLin+0215,0040,"Totais ->" 	   								,oFont8,100  )
+    oPrn:Say(_nLin+0215,1670,alltrim(TRANSFORM(nTotOrig,"@E 999,999,999"))	,oFont8,100  )
+    oPrn:Say(_nLin+0215,1770,alltrim(TRANSFORM(nTotEntr,"@E 999,999,999")) 	,oFont8,100  )
+    oPrn:Say(_nLin+0215,1870,alltrim(TRANSFORM(nTotCort,"@E 999,999,999"))	,oFont8,100  )  
+                                                                                        
+return
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
+ฑฑบPrograma  ณXDEVOLUCAO บ Autor ณ Lucas Santos         บ Data ณ  15/01/16บฑฑ
+ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
+ฑฑบDesc.     ณCria SX1                                                    บฑฑ
+ฑฑบ          ณ                                                            บฑฑ
+ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
+ฑฑบUso       ณ AP                                                         บฑฑ
+ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+
+Static Function ValidPerg()
+
+    LOCAL aRegs 	:= {}
+    LOCAL aAreaOld 	:= GetArea()
+    Local nX        := 0
+
+    AADD(aRegs,{"Do Cliente?"		,"Do Cliente?"		,"Do Cliente?"		,"mv_ch1","C", 6,0,0,"G",""  ,"mv_par01",""		     ,""		   ,""            ,"" ,"",""				  ,""			    ,""			   ,"","",""	   ,""	   ,""	  ,"SA1","",""})
+    AADD(aRegs,{"At้ Cliente?"		,"At้ Cliente?"		,"At้ Cliente?"		,"mv_ch2","C", 6,0,0,"G",""  ,"mv_par02",""		     ,""		   ,""            ,"" ,"",""				  ,""			    ,""			   ,"","",""	   ,""	   ,""	  ,"SA1","",""})
+    AADD(aRegs,{"Do Vendedor?"		,"Do Vendedor?"		,"Do Vendedor?"		,"mv_ch3","C", 6,0,0,"G",""  ,"mv_par03",""		     ,""		   ,""            ,"" ,"",""				  ,""			    ,""			   ,"","",""	   ,""	   ,""	  ,"SA3","",""})
+    AADD(aRegs,{"At้ Vendedor?"		,"At้ Vendedor?"	,"At้ Vendedor?"	,"mv_ch4","C", 6,0,0,"G",""  ,"mv_par04",""		     ,""		   ,""            ,"" ,"",""				  ,""			    ,""			   ,"","",""	   ,""	   ,""	  ,"SA3","",""})
+    AADD(aRegs,{"Da Data Corte?"	,"Da Data Corte?"	,"Da Data Corte?"	,"mv_ch5","D", 8,0,0,"G",""  ,"mv_par05",""		     ,""		   ,""            ,"" ,"",""				  ,""			    ,""			   ,"","",""	   ,""	   ,""	  ,"","",""})
+    AADD(aRegs,{"Ate Data Corte?"	,"Ate Data Corte?"	,"Ate Data Corte?"	,"mv_ch6","D", 8,0,0,"G",""  ,"mv_par06",""		     ,""		   ,""            ,"" ,"",""				  ,""			    ,""			   ,"","",""	   ,""	   ,""	  ,"","",""})
+    AADD(aRegs,{"Do Produto?"		,"Do Produto?"		,"Do Produto?"		,"mv_ch7","C",15,0,0,"G",""  ,"mv_par07",""		     ,""		   ,""            ,"" ,"",""				  ,""			    ,""			   ,"","",""	   ,""	   ,""	  ,"SB1","",""})
+    AADD(aRegs,{"At้ Produto?"		,"At้ Produto?"		,"At้ Produto?"		,"mv_ch8","C",15,0,0,"G",""  ,"mv_par08",""		     ,""		   ,""            ,"" ,"",""				  ,""			    ,""			   ,"","",""	   ,""	   ,""	  ,"SB1","",""})
+
+    dbSelectArea("SX1")
+    dbSetOrder(1)
+    For nX:=1 to Len(aRegs)
+        If !(dbSeek(cPerg+StrZero(nx,2)))
+            RecLock("SX1",.T.)
+            Replace X1_GRUPO    with cPerg
+            Replace X1_ORDEM   	with StrZero(nx,2)
+            Replace x1_pergunte	with aRegs[nx][01]
+            Replace x1_perspa   with aRegs[nx][02]
+            Replace x1_pereng   with aRegs[nx][03]
+            Replace x1_variavl	with aRegs[nx][04]
+            Replace x1_tipo		with aRegs[nx][05]
+            Replace x1_tamanho	with aRegs[nx][06]
+            Replace x1_decimal	with aRegs[nx][07]
+            Replace x1_presel   with aRegs[nx][08]
+            Replace x1_gsc      with aRegs[nx][09]
+            Replace x1_valid    with aRegs[nx][10]
+            Replace x1_var01    with aRegs[nx][11]
+            Replace x1_def01    with aRegs[nx][12]
+            Replace x1_defspa1	with aRegs[nx][13]
+            Replace x1_defeng1	with aRegs[nx][14]
+            Replace x1_cnt01    with aRegs[nx][15]
+            Replace x1_var02    with aRegs[nx][16]
+            Replace x1_def02    with aRegs[nx][17]
+            Replace x1_defspa2	with aRegs[nx][18]
+            Replace x1_defeng2	with aRegs[nx][19]
+            Replace x1_cnt02    with aRegs[nx][20]
+            Replace x1_var03    with aRegs[nx][21]
+            Replace x1_def03    with aRegs[nx][22]
+            Replace x1_defspa3	with aRegs[nx][23]
+            Replace x1_defeng3	with aRegs[nx][24]
+            Replace x1_f3     	with aRegs[nx][25]
+            Replace x1_grpsxg 	with aRegs[nx][26]
+            Replace x1_grpsxg 	with aRegs[nx][27]
+            MsUnlock()
+        Endif
+    Next
+
+    RestArea( aAreaOld )
+Return
+

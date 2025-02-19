@@ -1,0 +1,249 @@
+#INCLUDE "rwmake.ch"
+#INCLUDE "protheus.ch" 
+#INCLUDE "TOPCONN.CH
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³Impress   ºAutor  ³Microsiga           º Data ³  09/10/08   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³     INICIO DA IMPRESSÕES                                   º±±
+±±º          ³                                                            º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ AP                                                         º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+USER FUNCTION xCgsRSelecionados()
+    private nPag 	:= 1
+    PRIVATE _nLin 	:= 0050
+    PRIVATE oBrush1 := TBrush():New( , CLR_LIGHTGRAY ) 
+
+    oPrn:= TMSPrinter():New()
+    oPrn:SetLandscape()
+    oPrn:SetPaperSize(9) // A4
+    oPrn:Setup()
+    oPrn:StartPage()
+
+    CabecAber(oPrn,1) 
+    detailAber(oPrn,1) 
+
+    Set Filter to
+    oPrn:EndPage()
+    oPrn:Preview()
+    MS_FLUSH()
+
+return()   
+
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³Impress   ºAutor  ³Microsiga           º Data ³  09/10/08   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³     INICIO DA IMPRESSÕES                                   º±±
+±±º          ³                                                            º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ AP                                                         º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+STATIC FUNCTION CabecAber(oPrn,nOpc) 
+ 		
+    cBitMap:= "lgrl01.BMP"
+    cBitIso:= ""
+    cBitSel:= "LOGO_TOPFIVE.BMP"   
+
+    oPrn:Say(040,0700,"ALIMENTOS TIA SONIA",oFont7,100) 
+
+    oPrn:Say(120,0410,"PEDIDOS SELECIONADOS - MONTAGEM DE CARGA",oFont6,100) 	
+
+    oPrn:SayBitmap(050,044,cBitMap,200,125 ) //700,300
+    oPrn:Say(040,3000,"Emissão .: "+ DtoC(Date()),oFont8,100) 
+    oPrn:Say(080,3000,"Hora      .: "+ Time(),oFont8,100)
+    oPrn:Say(120,3000,"Página   .: "+ StrZero(nPag,2),oFont8,100)
+    oPrn:Box(040+0000,0040,185+0000,3370)
+    oPrn:Box(040+0000,0040,185+0000,2990)
+
+    oPrn:Say(0215,0040,"STATUS"		,oFont8,100  )
+    oPrn:Say(0215,0200,"PEDIDO"		,oFont8,100  )
+    oPrn:Say(0215,0400,"ENTREGA"	,oFont8,100  )
+    oPrn:Say(0215,0700,"CLIENTE"	,oFont8,100  )
+    oPrn:Say(0215,1400,"CIDADE"		,oFont8,100  )
+    oPrn:Say(0215,1700,"BAIRRO"		,oFont8,100  ) 
+    oPrn:Say(0215,2200,"PESO"		,oFont8,100  )
+    oPrn:Say(0215,2400,"VALOR"		,oFont8,100  )
+    oPrn:Say(0215,2700,"TIPO"		,oFont8,100  )
+    oPrn:Say(0215,3100,"DESCONTO"	,oFont8,100  )
+		
+Return()  
+
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³Impress   ºAutor  ³Microsiga           º Data ³  09/10/08   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³     INICIO DA IMPRESSÕES                                   º±±
+±±º          ³                                                            º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ AP                                                         º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+STATIC FUNCTION detailAber(oPrn,nOpc)
+    local x
+    local cTotPeso 	:= 0
+    local cTotValor	:= 0 
+    local cTotDesc	:= 0 
+
+
+    /*###################################   IMPRIME ABERTOS   ################################################*/
+    FOR X:=1 TO LEN(oCgTela:aPedAbertos)
+        if !empty(oCgTela:aPedAbertos[x,3])
+            
+            cTipo 	:= CalcTpVend(   POSICIONE("SC5",1,XFILIAL("SC5")+oCgTela:aPedAbertos[x,3],"C5_XTPVEND") )
+            nDesc	:= CalcDescPv(oCgTela:aPedAbertos[x,3])
+
+            oPrn:Say(_nLin+0215,0040,"ABERTO"											,oFont3,100  )
+            oPrn:Say(_nLin+0215,0200,oCgTela:aPedAbertos[x,3]										,oFont3,100  )
+            oPrn:Say(_nLin+0215,0400,dtoc(oCgTela:aPedAbertos[x,4])								,oFont3,100  )
+            oPrn:Say(_nLin+0215,0700,oCgTela:aPedAbertos[x,5]+'-'+substr(oCgTela:aPedAbertos[x,6],1,25)		,oFont3,100  )
+            oPrn:Say(_nLin+0215,1400,alltrim(oCgTela:aPedAbertos[x,8])+"/"+oCgTela:aPedAbertos[x,7]	  		,oFont3,100  ) 
+            oPrn:Say(_nLin+0215,1700,oCgTela:aPedAbertos[x,9]	  									,oFont3,100  ) 
+            oPrn:Say(_nLin+0215,2100,TRANSFORM(oCgTela:aPedAbertos[x,14],"@E 999,999,999.99")		,oFont3,100  ) 
+            oPrn:Say(_nLin+0215,2300,TRANSFORM(oCgTela:aPedAbertos[x,15],"@E 999,999,999.99")		,oFont3,100  ) 	
+            oPrn:Say(_nLin+0215,2700,cTipo												,oFont3,100  ) 	
+            oPrn:Say(_nLin+0215,3000,TRANSFORM(nDesc,"@E 999,999,999.99")			,oFont3,100  ) 	
+
+            cTotPeso 	+= oCgTela:aPedAbertos[x,14]
+            cTotValor	+= oCgTela:aPedAbertos[x,15]
+            cTotDesc	+= nDesc
+            
+            _nLin += 050 
+            If _nLin > 2000
+                oPrn:Say(_nLin+0300,1700,"* * * * CONTINUA NA PRÓXIMA PÁGINA * * * *"       ,oFont8,100)
+                _nLin := 0050
+                nPag  := nPag+1
+                oPrn:EndPage()
+                oPrn:StartPage()
+                CabecAber(oPrn,2)//IMPRIME CABECALHO
+            Endif 
+        endif
+    NEXT X    
+    /*###################################   IMPRIME BLOQUEADOS   ################################################*/
+    FOR X:=1 TO LEN(oCgTela:aPedBloqueados)
+        if !empty(oCgTela:aPedBloqueados[x,3])
+            cTipo 	:= CalcTpVend(   POSICIONE("SC5",1,XFILIAL("SC5")+oCgTela:aPedBloqueados[x,3],"C5_XTPVEND") )
+            nDesc	:= CalcDescPv(oCgTela:aPedBloqueados[x,3])
+
+            oPrn:Say(_nLin+0215,0040,"BLOQUEADO"										,oFont3,100  )
+            oPrn:Say(_nLin+0215,0200,oCgTela:aPedBloqueados[x,3]									,oFont3,100  )
+            oPrn:Say(_nLin+0215,0400,dtoc(oCgTela:aPedBloqueados[x,4])								,oFont3,100  )
+            oPrn:Say(_nLin+0215,0700,oCgTela:aPedBloqueados[x,5]+'-'+substr(oCgTela:aPedBloqueados[x,6],1,25)	,oFont3,100  )
+            oPrn:Say(_nLin+0215,1400,alltrim(oCgTela:aPedBloqueados[x,8])+"/"+oCgTela:aPedBloqueados[x,7]	  			,oFont3,100  ) 
+            oPrn:Say(_nLin+0215,1700,oCgTela:aPedBloqueados[x,9]	  			,oFont3,100  ) 
+            oPrn:Say(_nLin+0215,2100,TRANSFORM(oCgTela:aPedBloqueados[x,14],"@E 999,999,999.99")		,oFont3,100  ) 
+            oPrn:Say(_nLin+0215,2300,TRANSFORM(oCgTela:aPedBloqueados[x,15],"@E 999,999,999.99")		,oFont3,100  )
+            oPrn:Say(_nLin+0215,2700,cTipo												,oFont3,100  ) 	
+            oPrn:Say(_nLin+0215,3000,TRANSFORM(nDesc,"@E 999,999,999.99")			,oFont3,100  ) 	
+
+            cTotPeso 	+= oCgTela:aPedBloqueados[x,14]
+            cTotValor	+= oCgTela:aPedBloqueados[x,15]	
+            cTotDesc	+= nDesc
+
+            _nLin += 050 
+            If _nLin > 2000
+                oPrn:Say(_nLin+0300,1700,"* * * * CONTINUA NA PRÓXIMA PÁGINA * * * *"       ,oFont8,100)
+                _nLin := 0050
+                nPag  := nPag+1
+                oPrn:EndPage()
+                oPrn:StartPage()
+                CabecAber(oPrn,2)//IMPRIME CABECALHO
+            Endif 
+        endif
+    NEXT X    
+    /*###################################   IMPRIME LIBERADOS   ################################################*/
+    FOR X:=1 TO LEN(oCgTela:aPedLiberados)
+        if !empty(oCgTela:aPedLiberados[x,3])
+            cTipo 	:= CalcTpVend(   POSICIONE("SC5",1,XFILIAL("SC5")+oCgTela:aPedLiberados[x,3],"C5_XTPVEND") )
+            nDesc	:= CalcDescPv(oCgTela:aPedLiberados[x,3])
+
+            oPrn:Say(_nLin+0215,0040,"LIBERADO"										,oFont3,100  )
+            oPrn:Say(_nLin+0215,0200,oCgTela:aPedLiberados[x,3]									,oFont3,100  )
+            oPrn:Say(_nLin+0215,0400,dtoc(oCgTela:aPedLiberados[x,4])								,oFont3,100  )
+            oPrn:Say(_nLin+0215,0700,oCgTela:aPedLiberados[x,5]+'-'+substr(oCgTela:aPedLiberados[x,6],1,25)	,oFont3,100  )
+            oPrn:Say(_nLin+0215,1400,alltrim(oCgTela:aPedLiberados[x,8])+"/"+oCgTela:aPedLiberados[x,7]	  			,oFont3,100  ) 
+            oPrn:Say(_nLin+0215,1700,oCgTela:aPedLiberados[x,9]	  			,oFont3,100  ) 
+            oPrn:Say(_nLin+0215,2100,TRANSFORM(oCgTela:aPedLiberados[x,14],"@E 999,999,999.99")		,oFont3,100  ) 
+            oPrn:Say(_nLin+0215,2300,TRANSFORM(oCgTela:aPedLiberados[x,15],"@E 999,999,999.99")		,oFont3,100  ) 	
+            oPrn:Say(_nLin+0215,2700,cTipo												,oFont3,100  ) 	
+            oPrn:Say(_nLin+0215,3000,TRANSFORM(nDesc,"@E 999,999,999.99")			,oFont3,100  ) 	
+
+            cTotPeso 	+= oCgTela:aPedLiberados[x,14]
+            cTotValor	+= oCgTela:aPedLiberados[x,15]	
+            cTotDesc	+= nDesc
+
+            _nLin += 050 
+            If _nLin > 2000
+                oPrn:Say(_nLin+0300,1700,"* * * * CONTINUA NA PRÓXIMA PÁGINA * * * *"       ,oFont8,100)
+                _nLin := 0050
+                nPag  := nPag+1
+                oPrn:EndPage()
+                oPrn:StartPage()
+                CabecAber(oPrn,2)//IMPRIME CABECALHO
+            Endif 
+        endif
+    NEXT X   
+    _nLin += 0100
+    oPrn:Say(_nLin+0215,0050,"TOTAL PESO  -> " + TRANSFORM(cTotPeso,"@E 999,999,999.99")	,oFont8,100  )
+    _nLin += 0050
+    oPrn:Say(_nLin+0215,0050,"TOTAL VALOR -> " + TRANSFORM(cTotValor,"@E 999,999,999.99")	,oFont8,100  )
+    _nLin += 0050
+    oPrn:Say(_nLin+0215,0050,"TOTAL DESCONTO -> " + TRANSFORM(cTotDesc,"@E 999,999,999.99")	,oFont8,100  )
+
+
+return()
+
+
+static function CalcTpVend(cTp)
+	local cRet := ""
+	if cTp == 'N'
+		cRet := "NORMAL"
+	elseif cTp == 'T'
+		cRet := "TROCA"
+	elseif cTp == 'A'
+		cRet := "AMOSTRA"
+	elseif cTp == 'P'
+		cRet := "PATROCINIO"
+	elseif cTp == 'I'
+		cRet := "INVESTIMENTO"
+	elseif cTp == 'R'
+		cRet := "REMESSA"
+	elseif cTp == 'O'
+		cRet := "OUTROS"
+	elseif cTp == 'Z'
+		cRet := "TRANSFERENCIA"
+	endif
+return(cRet)
+
+
+static function CalcDescPv(cPedido)
+	Local nRet 	:= 0
+	Local rArea	:= GetArea()
+	Beginsql alias "TEMP"
+		SELECT SUM(C6_VALDESC) AS DESCONTO
+		FROM %TABLE:SC6% 
+		WHERE C6_NUM = %exp:cPedido%
+			AND C6_FILIAL = %exp:xfilial("SC6")%
+	endsql
+	nRet := TEMP->DESCONTO
+	TEMP->(DBCLOSEAREA())
+	restarea(rArea)
+Return(nRet)

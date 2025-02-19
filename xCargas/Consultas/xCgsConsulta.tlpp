@@ -1,0 +1,200 @@
+#INCLUDE "Protheus.ch"
+#INCLUDE "fwbrowse.ch"
+
+#DEFINE ENTER CHR(13)+CHR(10)
+#DEFINE COL_LEFT "col_left"
+#define WND_BROWSE  "wnd_browse"
+#define WND_ENCHOICE "wnd_enchoice"
+#define WND_RESULT  "wnd_result"
+
+class xGgsConsulta
+
+    PUBLIC Data oDlgCons As Object
+	PUBLIC Data oGrpGrid as Object
+	PUBLIC Data oGetGrid as Object
+	PUBLIC Data oPanGrid as Object
+
+	PUBLIC Data oTempTable as Object
+	
+
+    PUBLIC Data aSize
+    PUBLIC Data cSql
+    PUBLIC Data cAliasTab
+	PUBLIC Data aEstrut
+	PUBLIC Data aDados
+	PUBLIC Data cQuery
+	PUBLIC Data nStatus
+	PUBLIC Data cError
+	PUBLIC Data aColunas
+	PUBLIC Data nProporc
+
+	PUBLIC Data cSayTit1
+	PUBLIC Data cSayTit2
+	PUBLIC Data cSayTit3
+
+
+
+	PUBLIC Data oFontAno as Object 
+    PUBLIC Data oFontSub as Object 
+    PUBLIC Data oFontSubN as Object
+    PUBLIC Data oFontBtn as Object 
+
+	PUBLIC Method New() Constructor
+	PUBLIC Method ExcecSQl()
+	PUBLIC Method Show()
+	PUBLIC Method exportar()
+	PUBLIC Method TabelaTemporaria()
+endclass
+
+
+
+Method New(lMaxmized,cTitulo1,cTitulo2,cTitulo3) Class xGgsConsulta
+
+	default lMaxmized 	:= .t.	
+
+	default cTitulo1 	:= "MOD"	
+	default cTitulo2 	:= "Exibicao"	
+	default cTitulo3 	:= "Consulta"	
+
+	Self:nProporc		:= iif(lMaxmized, 1 , 0.7 )
+    self:oDlgCons 	 	:= nil
+    self:aSize  		:= MsAdvSize()  
+	Self:cAliasTab		:= GetNextAlias()
+	Self:aColunas		:= {}
+
+	Self:cSayTit1		:= cTitulo1
+	Self:cSayTit2		:= cTitulo2
+	Self:cSayTit3		:= cTitulo3
+
+	self:oFontAno    	:= TFont():New("Tahoma",,-38)
+    self:oFontSub    	:= TFont():New("Tahoma",,-20)
+    self:oFontSubN   	:= TFont():New("Tahoma",,-20,,.T.)
+    self:oFontBtn    	:= TFont():New("Tahoma",,-14)
+
+return
+
+
+//---------------------------------------------------------------------------- */
+Method Show() Class xGgsConsulta
+	local nAtual
+
+	Private    nJanLarg := self:aSize[5] * Self:nProporc	
+    Private    nJanAltu := self:aSize[6] * Self:nProporc	
+
+
+ 	DEFINE MSDIALOG Self:oDlgCons TITLE Self:cSayTit2+" "+Self:cSayTit3 FROM 000, 000  TO nJanAltu, nJanLarg COLORS 0, 16777215 PIXEL
+
+	//Labels gerais
+	@ 004, 003 SAY Self:cSayTit1 SIZE 200, 030 FONT Self:oFontAno  OF Self:oDlgCons COLORS RGB(149,179,215) PIXEL
+	@ 004, 050 SAY Self:cSayTit2 SIZE 200, 030 FONT Self:oFontSub  OF Self:oDlgCons COLORS RGB(031,073,125) PIXEL
+	@ 014, 050 SAY Self:cSayTit3 SIZE 200, 030 FONT Self:oFontSubN OF Self:oDlgCons COLORS RGB(031,073,125) PIXEL
+
+
+	//Botões
+	@ 006, (nJanLarg/2-001)-(0052*02) BUTTON oBtnFech  PROMPT "Exportar"      SIZE 050, 018 OF Self:oDlgCons ACTION Self:exportar()   FONT Self:oFontBtn PIXEL
+	@ 006, (nJanLarg/2-001)-(0052*01) BUTTON oBtnFech  PROMPT "Fechar"        SIZE 050, 018 OF Self:oDlgCons ACTION (Self:oDlgCons:End())   FONT Self:oFontBtn PIXEL
+	//Dados
+	@ 024, 003 GROUP Self:oGrpGrid TO (nJanAltu/2-003), (nJanLarg/2-003) PROMPT "Browse" OF Self:oDlgCons COLOR 0, 16777215 PIXEL
+	Self:oGrpGrid:oFont := Self:oFontBtn
+
+
+	//Define Colulas
+	For nAtual := 1 To Len(Self:aEstrut)
+		oColumn := FWBrwColumn():New()
+		oColumn:SetData(&("{|| " + Self:cAliasTab + "->" + Self:aEstrut[nAtual][1] +"}"))
+		oColumn:SetTitle(Self:aEstrut[nAtual][1])
+		oColumn:SetType(Self:aEstrut[nAtual][2])
+		oColumn:SetSize(Self:aEstrut[nAtual][3])
+		oColumn:SetDecimal(Self:aEstrut[nAtual][4])
+
+		aAdd(Self:aColunas, oColumn)
+	Next nAtual
+
+
+	Self:oPanGrid := tPanel():New(033, 006, "", Self:oDlgCons, , , , RGB(000,000,000), RGB(254,254,254), (nJanLarg/2 - 13),     (nJanAltu/2 - 45))
+	Self:oGetGrid := FWBrowse():New()
+	Self:oGetGrid:DisableFilter()
+	Self:oGetGrid:DisableConfig()
+	Self:oGetGrid:DisableReport()
+	Self:oGetGrid:DisableSeek()
+	Self:oGetGrid:DisableSaveConfig()
+	Self:oGetGrid:SetFontBrowse(Self:oFontBtn)
+	Self:oGetGrid:SetAlias(Self:cAliasTab)
+	Self:oGetGrid:SetDataTable()
+	//Self:oGetGrid:SetEditCell(.T., {|| .T.}) 
+	Self:oGetGrid:lHeaderClick := .F.
+	Self:oGetGrid:SetColumns(Self:aColunas)
+	Self:oGetGrid:SetOwner(Self:oPanGrid)
+	Self:oGetGrid:Activate()
+
+
+	ACTIVATE MSDIALOG Self:oDlgCons CENTERED
+
+	(Self:cAliasTab)->(DBclosearea())
+Return 
+
+
+Method exportar() Class xGgsConsulta
+	Self:oGetGrid:Report()
+return()
+
+
+
+Method ExcecSQl(cSql) Class xGgsConsulta
+	local s
+	local cTmpSql		:= GetNextAlias()			
+	Default cSql		:= ""
+
+	Self:cQuery			:= cSql
+	Self:aDados			:= {}
+	Self:nStatus 		:= TCSqlExec(Self:cQuery)
+
+	if (Self:nStatus < 0) 
+		Self:cError	:= "TCSQLError() " + TCSQLError()
+		Self:oTMultiget := tMultiget():new(01,01,{| u | if( pCount() > 0, Self:cError := u, Self:cError )},Self:oPanelGrd	,Self:aSize[5]*0.395, Self:aSize[6]*0.195 ,,,,,,.T.)
+	else
+		dbUseArea(.T.,"TOPCONN",TcGenQry(,,Self:cQuery),cTmpSql,.T.,.T.) 
+		DBSELECTAREA(cTmpSql)
+		procregua((cTmpSql)->(-RecCount()))	
+		
+		Self:aEstrut  := (cTmpSql)->(DBSTRUCT())
+
+
+
+		Self:TabelaTemporaria()
+		while (cTmpSql)->(!eof())
+			RecLock(Self:cAliasTab,.t.)
+				for s:=1 to len(Self:aEstrut)
+					&( Self:cAliasTab+'->'+Self:aEstrut[s,1] ) := &( cTmpSql+'->'+Self:aEstrut[s,1])
+				next
+			msunlock()
+			(cTmpSql)->(dbskip())
+		enddo
+		(cTmpSql)->(DBclosearea())
+
+	endif
+Return 
+
+
+
+
+Method TabelaTemporaria() Class xGgsConsulta
+	local f
+    //Cria a temporária
+    Self:oTempTable := FWTemporaryTable():New(Self:cAliasTab)
+        
+    //Adiciona no array das colunas as que serão incluidas (Nome do Campo, Tipo do Campo, Tamanho, Decimais)
+    aFields := {}
+    for f:=1 to len(Self:aEstrut)
+        aAdd(aFields, { Self:aEstrut[f,1],;
+                        Self:aEstrut[f,2],;
+                        Self:aEstrut[f,3],;
+                        Self:aEstrut[f,4]} )
+    next f
+
+    //Define as colunas usadas, adiciona indice e cria a temporaria no banco
+    Self:oTempTable:SetFields( aFields )
+    Self:oTempTable:AddIndex("1", { Self:aEstrut[1,1] } )
+    Self:oTempTable:Create()
+
+return()
